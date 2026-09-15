@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import Head from 'next/head';
 
 export default function Home() {
@@ -12,8 +12,9 @@ export default function Home() {
     if (isScanning) {
       if (streamRef.current) {
         streamRef.current.getTracks().forEach(track => track.stop());
-        setIsScanning(false);
+        streamRef.current = null;
       }
+      setIsScanning(false);
       return;
     }
 
@@ -26,13 +27,19 @@ export default function Home() {
         }
       });
       streamRef.current = stream;
-      videoRef.current.srcObject = stream;
-      setIsScanning(true);
       setError(null);
+      setIsScanning(true);
     } catch (err) {
       setError(`Erreur caméra: ${err.message}`);
     }
   };
+
+  useEffect(() => {
+    if (isScanning && videoRef.current && streamRef.current) {
+      videoRef.current.srcObject = streamRef.current;
+      videoRef.current.play().catch(err => console.log('Autoplay:', err));
+    }
+  }, [isScanning]);
 
   const handleManualSubmit = (e) => {
     e.preventDefault();
