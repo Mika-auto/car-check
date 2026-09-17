@@ -45,7 +45,7 @@
     <div class="card">
       <h2><span class="stepnum">1</span>Morceau</h2>
       <div id="drop" class="drop">Dépose ton fichier MP3 / WAV ici<br><small>ou clique pour choisir</small></div>
-      <input type="file" id="file" accept="audio/*" hidden>
+      <input type="file" id="file" accept="audio/*,.mp3,.wav,.m4a,.aac,audio/mpeg,audio/wav,audio/x-wav,audio/mp4,audio/aac" hidden>
       <div class="status" id="fileStatus">Aucun fichier chargé.</div>
     </div>
 
@@ -108,12 +108,19 @@
 "use strict";
 /* ============ ÉTAT GLOBAL ============ */
 const S = {
-  buffer: null, audioEl: null, actx: null, analyser: null,
+  buffer: null,          // AudioBuffer décodé (optionnel — analyse fine)
+  audioEl: null,         // <audio> pour lecture/preview
+  actx: null,            // AudioContext
+  analyser: null,        // AnalyserNode temps réel
   srcNode: null, recDest: null,
-  energy: [], duration: 0,
-  hookStart: 0, hookDur: 30, bpm: 0,
-  lyricLines: [], coverSeed: undefined,
-  mode: "short", recording: false,
+  energy: [],            // énergie RMS par tranche de 100 ms
+  duration: 0,
+  hookStart: 0, hookDur: 30,
+  bpm: 0,
+  lyricLines: [],        // lignes nettoyées avec timing
+  coverSeed: undefined,  // graine pochette (undefined = dérivée du contenu)
+  mode: "short",
+  recording: false,
 };
 
 const $ = id => document.getElementById(id);
@@ -126,7 +133,7 @@ function mulberry32(a) { return function() { a |= 0; a = a + 0x6D2B79F5 | 0; let
 function setStatus(el, msg, cls) { el.textContent = msg; el.className = "status " + (cls || ""); }
 function fmtTime(s) { return Math.floor(s / 60) + ":" + String(Math.floor(s % 60)).padStart(2, "0"); }
 
-/* ============ 1. CHARGEMENT AUDIO ============ */
+/* ============ 1. CHARGEMENT AUDIO (compatible iOS/Safari) ============ */
 drop.addEventListener("click", () => fileInput.click());
 drop.addEventListener("dragover", e => { e.preventDefault(); drop.classList.add("over"); });
 drop.addEventListener("dragleave", () => drop.classList.remove("over"));
@@ -135,46 +142,81 @@ fileInput.addEventListener("change", () => { if (fileInput.files[0]) loadAudio(f
 
 async function loadAudio(file) {
   try {
-    setStatus($("fileStatus"), "Décodage de « " + file.name + " »…");
-    const buf = await file.arrayBuffer();
+    setStatus($("fileStatus"), "Chargement de « " + file.name + " »…");
     S.actx = S.actx || new (window.AudioContext || window.webkitAudioContext)();
-    S.buffer = await S.actx.decodeAudioData(buf);
-    S.duration = S.buffer.duration;
 
     if (S.audioEl) S.audioEl.remove();
     S.audioEl = new Audio(URL.createObjectURL(file));
     S.audioEl.crossOrigin = "anonymous";
 
-    if (S.srcNode) { try { S.actx.close(); } catch (e) {} S.actx = new (window.AudioContext || window.webkitAudioContext)(); }
-    S.srcNode = S.actx.createMediaElementSource(S.audioEl);
-    S.analyser = S.actx.createAnalyser();
-    S.analyser.fftSize = 256;
-    S.srcNode.connect(S.analyser);
-    S.analyser.connect(S.actx.destination);
-    S.recDest = S.actx.createMediaStreamDestination();
-    S.analyser.connect(S.recDest);
+    if (!S.srcNode) {
+      S.srcNode = S.actx.createMediaElementSource(S.audioEl);
+      S.analyser = S.actx.createAnalyser();
+      S.analyser.fftSize = 256;
+      S.srcNode.connect(S.analyser);
+      S.analyser.connect(S.actx.destination);
+      S.recDest = S.actx.createMediaStreamDestination();
+      S.analyser.connect(S.recDest);
+    } else {
+      // nouvelle source audio : on repart d'un AudioContext propre
+      try { S.actx.close(); } catch (e) {}
+      S.actx = new (window.AudioContext || window.webkitAudioContext)();
+      S.srcNode = S.actx.createMediaElementSource(S.audioEl);
+      S.analyser = S.actx.createAnalyser();
+      S.analyser.fftSize = 256;
+      S.srcNode.connect(S.analyser);
+      S.analyser.connect(S.actx.destination);
+      S.recDest = S.actx.createMediaStreamDestination();
+      S.analyser.connect(S.recDest);
+    }
+
+    // durée via l'élément audio (fiable sur iOS, contrairement à decodeAudioData)
+    await new Promise((res, rej) => {
+      if (S.audioEl.readyState >= 1 && isFinite(S.audioEl.duration) && S.audioEl.duration > 0) return res();
+      S.audioEl.addEventListener("loadedmetadata", res, { once: true });
+      S.audioEl.addEventListener("error", () => rej(new Error("fichier audio illisible par Safari")), { once: true });
+      S.audioEl.load();
+      setTimeout(() => rej(new Error("délai dépassé au chargement")), 20000);
+    });
+    S.duration = S.audioEl.duration;
+
+    // analyse fine (BPM, hook) : optionnelle — si le décodage échoue sur ce navigateur, mode simple
+    try {
+      const buf = await file.arrayBuffer();
+      S.buffer = await S.actx.decodeAudioData(buf);
+      analyzeAudio();
+    } catch (e) {
+      S.buffer = null;
+      S.hookStart = 0; S.hookDur = Math.min(30, S.duration || 30); S.bpm = 0;
+      $("analysis").innerHTML =
+        '<span class="pill">⏱ ' + fmtTime(S.duration) + "</span>" +
+        '<span class="pill"> 🔥 Extrait : 0:00 → ' + fmtTime(S.hookDur) + "</span>" +
+        '<div class="status">Mode simple : analyse fine non supportée par ce navigateur, les 30 premières secondes sont utilisées.</div>';
+      scheduleLyrics();
+      buildKit();
+    }
 
     drop.classList.add("has");
     drop.innerHTML = "🎵 " + file.name + "<br><small>" + fmtTime(S.duration) + " — clique pour remplacer</small>";
-    analyzeAudio();
-    setStatus($("fileStatus"), "Morceau chargé et analysé ✔", "ok");
+    setStatus($("fileStatus"), "Morceau chargé ✔", "ok");
     updateReady();
   } catch (err) {
-    setStatus($("fileStatus"), "Impossible de décoder ce fichier : " + err.message, "err");
+    setStatus($("fileStatus"), "Impossible de charger : " + err.message, "err");
   }
 }
 
-/* ============ ANALYSE : ÉNERGIE + HOOK + BPM ============ */
+/* ============ ANALYSE : ÉNERGIE + HOOK + BPM (si décodage possible) ============ */
 function analyzeAudio() {
   const data = S.buffer.getChannelData(0);
   const sr = S.buffer.sampleRate;
-  const win = Math.floor(sr * 0.1);
+  const win = Math.floor(sr * 0.1); // tranches de 100 ms
   S.energy = [];
   for (let i = 0; i + win <= data.length; i += win) {
     let sum = 0;
     for (let j = 0; j < win; j += 4) { const v = data[i + j]; sum += v * v; }
     S.energy.push(Math.sqrt(sum / (win / 4)));
   }
+  // lissage
   const sm = S.energy.map((v, i) => {
     let s = 0, n = 0;
     for (let k = Math.max(0, i - 5); k <= Math.min(S.energy.length - 1, i + 5); k++) { s += S.energy[k]; n++; }
@@ -182,6 +224,7 @@ function analyzeAudio() {
   });
   S.energy = sm;
 
+  // HOOK : fenêtre glissante de 30 s à plus forte énergie
   if (S.duration > 35) {
     S.hookDur = 30;
     const winN = Math.min(300, S.energy.length);
@@ -191,6 +234,7 @@ function analyzeAudio() {
       if (acc > bestSum) { bestSum = acc; best = start; }
       acc += S.energy[start + winN] - S.energy[start];
     }
+    // recule jusqu'à une vallée locale (départ naturel) dans les 8 s précédentes
     let s = best;
     for (let k = best; k > Math.max(30, best - 80); k--) { if (S.energy[k] < S.energy[s]) s = k; }
     S.hookStart = s * 0.1;
@@ -199,6 +243,7 @@ function analyzeAudio() {
   }
   if (S.hookStart + S.hookDur > S.duration) S.hookStart = Math.max(0, S.duration - S.hookDur);
 
+  // BPM approximatif : autocorrélation de l'enveloppe d'onsets (60–180 BPM)
   const onsets = S.energy.map((v, i) => i === 0 ? 0 : Math.max(0, v - S.energy[i - 1]));
   let bestBpm = 0, bestScore = -1;
   for (let bpmCand = 60; bpmCand <= 180; bpmCand++) {
@@ -221,9 +266,10 @@ function analyzeAudio() {
 /* ============ 2. PAROLES → SOUS-TITRES ============ */
 function parseLyrics() {
   return $("lyrics").value.split(/\r?\n/)
-    .map(l => l.replace(/\[.*?\]/g, "").trim())
+    .map(l => l.replace(/\[.*?\]/g, "").trim()) // retire les tags Suno [Verse] etc.
     .filter(l => l.length > 0);
 }
+// Distribue les lignes sur l'extrait, pondérées par longueur (approximation : Suno ne fournit pas de timestamps)
 function scheduleLyrics() {
   const lines = parseLyrics();
   if (!lines.length || !S.duration) { S.lyricLines = []; return; }
@@ -236,9 +282,10 @@ function lyricAt(time) {
   return null;
 }
 
-/* ============ 3. POCHETTE SÉMANTIQUE ============ */
+/* ============ 3. POCHETTE SÉMANTIQUE (liée aux paroles) ============ */
 const STOPWORDS = new Set(("le la les un une des du de d l et ou mais donc or ni car ne pas plus moins très bien tout tous toute toutes ce cet cette ces mon ma mes ton ta tes son sa ses notre nos votre vos leur leurs qui que quoi dont où je tu il elle on nous vous ils elles me te se lui y en a à au aux avec sans sous sur pour par est suis es sommes êtes sont était être ai as avons avez ont avoir fait faire va vais vas vont aller c'est j'ai n'est qu'il s'il the a an and or but of to in on at for with without from is are was were be been being it its this that these those i you he she we they me him her them my your his our their as if so no not do does did done have has had will would can could should just like get got go going know think see seen say said what which who whom when where why how all any both each few more most other some such only own same than too very s t don now").split(" "));
 
+// Thèmes visuels : mots-clés des paroles → palette + motifs liés au sens
 const THEMES = [
   { name: "nuit",   hue: [220, 260], motif: "stars",  words: "nuit night dark noir étoile star lune moon sombre shadow midnight minuit rêve dream silence dormir sleep insomnia insomnie clair galaxy galaxie cosmos space espace nebula nébuleuse".split(" ") },
   { name: "feu",    hue: [5, 45],   motif: "rays",   words: "feu fire flamme flame brûle burn burning chaud heat enfer hell rage fury colère sang blood red rouge explosion bang boom".split(" ") },
@@ -250,6 +297,7 @@ const THEMES = [
   { name: "or",     hue: [40, 60],  motif: "rays",   words: "or gold golden roi king couronne crown shine brille shining bright lumière light glory gloire diamant diamond winner victoire win legend légende étoile star".split(" ") },
 ];
 
+// Extrait les mots-clés (fréquence, sans stopwords) des paroles
 function extractKeywords(lyrics, maxN) {
   const freq = new Map();
   (lyrics.toLowerCase().replace(/[^\p{L}\s'-]/gu, " ").split(/\s+/)).forEach(w => {
@@ -260,6 +308,7 @@ function extractKeywords(lyrics, maxN) {
   return [...freq.entries()].sort((a, b) => b[1] - a[1]).slice(0, maxN || 5).map(e => e[0]);
 }
 
+// Choisit un thème visuel selon les mots-clés des paroles
 function pickTheme(lyrics, seed) {
   const lower = " " + lyrics.toLowerCase() + " ";
   let best = null, bestHits = 0;
@@ -281,11 +330,13 @@ function drawCover(ctx, size, seed) {
   const keywords = extractKeywords(lyrics, 4);
   const hue = theme.hue[0] + Math.floor(rnd() * (theme.hue[1] - theme.hue[0]));
 
+  // fond dégradé dans la palette du thème
   const bg = ctx.createLinearGradient(0, 0, size * 0.3, size);
   bg.addColorStop(0, "hsl(" + hue + ",55%," + (8 + rnd() * 8) + "%)");
   bg.addColorStop(1, "hsl(" + ((hue + 25) % 360) + ",60%," + (16 + rnd() * 10) + "%)");
   ctx.fillStyle = bg; ctx.fillRect(0, 0, size, size);
 
+  // MOTIF lié au thème
   ctx.save();
   if (theme.motif === "stars") {
     for (let i = 0; i < 140; i++) {
@@ -340,6 +391,7 @@ function drawCover(ctx, size, seed) {
       const w = size * (0.05 + rnd() * 0.12), h = size * (0.15 + rnd() * 0.4);
       ctx.fillStyle = "hsl(" + hue + ",40%," + (10 + rnd() * 12) + "%)";
       ctx.fillRect(x, size - h, w, h);
+      // fenêtres allumées
       ctx.fillStyle = "hsl(" + ((hue + 150) % 360) + ",90%,70%)";
       for (let wy = size - h + size * 0.03; wy < size - size * 0.02; wy += size * 0.045)
         for (let wx = x + size * 0.012; wx < x + w - size * 0.015; wx += size * 0.038)
@@ -368,10 +420,12 @@ function drawCover(ctx, size, seed) {
   }
   ctx.restore();
 
+  // halo derrière le titre
   const g = ctx.createRadialGradient(size / 2, size * 0.48, 0, size / 2, size * 0.48, size * 0.55);
   g.addColorStop(0, "rgba(0,0,0,0.45)"); g.addColorStop(0.7, "rgba(0,0,0,0.15)"); g.addColorStop(1, "rgba(0,0,0,0)");
   ctx.fillStyle = g; ctx.fillRect(0, 0, size, size);
 
+  // MOTS-CLÉS des paroles, dispersés en filigrane
   if (keywords.length) {
     ctx.textAlign = "center";
     keywords.forEach(kw => {
@@ -386,6 +440,7 @@ function drawCover(ctx, size, seed) {
     });
   }
 
+  // TITRE en grande typographie
   ctx.textAlign = "center"; ctx.textBaseline = "middle";
   if (title) {
     const words = title.split(/\s+/);
@@ -405,15 +460,18 @@ function drawCover(ctx, size, seed) {
       ctx.fillText(l.toUpperCase(), size / 2, y);
       ctx.shadowBlur = 0;
     });
+    // liseré accent sous le titre, couleur du thème
     ctx.fillStyle = "hsl(" + ((hue + 40) % 360) + ",90%,65%)";
     ctx.fillRect(size * 0.35, size * 0.47 + (lines.length / 2) * fs * 1.15 + size * 0.02, size * 0.3, size * 0.012);
   }
+  // nom d'artiste en haut
   const artist = ($("artist").value || "").trim();
   if (artist) {
     ctx.font = "600 " + Math.floor(size * 0.028) + "px Inter, system-ui, sans-serif";
     ctx.fillStyle = "rgba(255,255,255,0.75)";
     ctx.fillText(artist.toUpperCase(), size / 2, size * 0.075);
   }
+  // badge thème discret en bas
   ctx.font = "500 " + Math.floor(size * 0.02) + "px Inter, system-ui, sans-serif";
   ctx.fillStyle = "rgba(255,255,255,0.55)";
   ctx.fillText("ambiance : " + theme.name, size / 2, size * 0.955);
@@ -443,7 +501,7 @@ function initParticles() { particles = Array.from({ length: 60 }, () => ({ x: Ma
 initParticles();
 
 const freqData = new Uint8Array(128);
-function bands() {
+function bands() { // basse / médium / aigu depuis l'analyseur temps réel
   if (!S.analyser) return { bass: 0.4, mid: 0.3, treb: 0.2 };
   S.analyser.getByteFrequencyData(freqData);
   let b = 0, m = 0, t = 0;
@@ -453,9 +511,11 @@ function bands() {
   return { bass: b / 8 / 255, mid: m / 24 / 255, treb: t / 64 / 255 };
 }
 
+// rendu paramétrable : partagé entre l'aperçu (540×960) et l'export (1080×1920)
 function renderTo(ctx, W, H, relTime, isCanvasMode, coverSrc) {
   const band = relTime >= 0 ? bands() : { bass: 0.4, mid: 0.3, treb: 0.2 };
-  const sc = W / 540;
+  const sc = W / 540; // facteur d'échelle des tailles
+  // fond : pochette agrandie + zoom pulsé sur la basse
   ctx.save();
   const zoom = 1.15 + band.bass * 0.12;
   const bs = Math.max(W, H) * zoom;
@@ -463,9 +523,11 @@ function renderTo(ctx, W, H, relTime, isCanvasMode, coverSrc) {
   ctx.filter = "saturate(1.3) brightness(0.55)";
   ctx.drawImage(coverSrc, -bs / 2, -bs / 2, bs, bs);
   ctx.filter = "none"; ctx.restore();
+  // vignette sombre pour lisibilité
   const vg = ctx.createRadialGradient(W / 2, H / 2, H * 0.2, W / 2, H / 2, H * 0.75);
   vg.addColorStop(0, "rgba(0,0,0,0.1)"); vg.addColorStop(1, "rgba(0,0,0,0.65)");
   ctx.fillStyle = vg; ctx.fillRect(0, 0, W, H);
+  // particules réactives
   for (const p of particles) {
     p.x += p.vx * (1 + band.treb * 6); p.y += p.vy * (1 + band.mid * 4);
     if (p.x < -0.05) p.x = 1.05; if (p.x > 1.05) p.x = -0.05;
@@ -475,6 +537,7 @@ function renderTo(ctx, W, H, relTime, isCanvasMode, coverSrc) {
     ctx.arc(p.x * W, p.y * H, p.r * (2 + band.bass * 10) * sc, 0, Math.PI * 2);
     ctx.fill();
   }
+  // anneau waveform réactif
   const cx = W / 2, cy = H * 0.46, baseR = W * 0.30;
   for (let a = 0; a < 64; a++) {
     const ang = (a / 64) * Math.PI * 2;
@@ -485,6 +548,7 @@ function renderTo(ctx, W, H, relTime, isCanvasMode, coverSrc) {
   }
 
   if (!isCanvasMode) {
+    // header titre + artiste
     const title = $("songTitle").value || "Titre du morceau";
     const artist = $("artist").value;
     ctx.textAlign = "center";
@@ -496,6 +560,7 @@ function renderTo(ctx, W, H, relTime, isCanvasMode, coverSrc) {
       ctx.fillStyle = "rgba(255,255,255,0.7)";
       ctx.fillText(artist, cx, H * 0.155);
     }
+    // paroles karaoké (wrap sur plusieurs lignes si longue)
     const line = relTime >= 0 ? lyricAt(Math.min(relTime, S.hookDur - 0.05)) : (S.lyricLines[0] ? S.lyricLines[0].text : null);
     if (line && relTime < S.hookDur) {
       ctx.font = "800 " + Math.floor(W * 0.062) + "px Inter, system-ui, sans-serif";
@@ -509,6 +574,7 @@ function renderTo(ctx, W, H, relTime, isCanvasMode, coverSrc) {
         ctx.shadowBlur = 0;
       });
     }
+    // écran de fin : call-to-action
     if (relTime >= S.hookDur) {
       ctx.fillStyle = "rgba(0,0,0,0.55)"; ctx.fillRect(0, H * 0.42, W, H * 0.2);
       ctx.fillStyle = "#fff"; ctx.font = "800 " + Math.floor(W * 0.07) + "px Inter, system-ui, sans-serif";
@@ -517,6 +583,7 @@ function renderTo(ctx, W, H, relTime, isCanvasMode, coverSrc) {
       ctx.fillStyle = "rgba(255,255,255,0.8)";
       ctx.fillText("lien en bio / Spotify", cx, H * 0.56);
     }
+    // barre de progression discrète
     if (relTime >= 0 && relTime < S.hookDur) {
       ctx.fillStyle = "rgba(255,255,255,0.2)"; ctx.fillRect(W * 0.08, H * 0.93, W * 0.84, 4 * sc);
       ctx.fillStyle = "#fff"; ctx.fillRect(W * 0.08, H * 0.93, W * 0.84 * Math.min(1, relTime / S.hookDur), 4 * sc);
@@ -525,6 +592,7 @@ function renderTo(ctx, W, H, relTime, isCanvasMode, coverSrc) {
 }
 function renderFrame(relTime) { renderTo(pctx, preview.width, preview.height, relTime, S.mode === "canvas", coverPreview); }
 
+/* boucle d'animation */
 let playing = false;
 (function loop() {
   requestAnimationFrame(loop);
@@ -549,11 +617,12 @@ $("playBtn").addEventListener("click", async () => {
 });
 $("mode").addEventListener("change", e => { S.mode = e.target.value; renderFrame(-1); });
 
-/* ============ 5. EXPORT VIDÉO ============ */
+/* ============ 5. EXPORT VIDÉO (MP4 si supporté, sinon WebM) ============ */
 $("exportBtn").addEventListener("click", async () => {
   if (S.recording || !S.audioEl) return;
   const isCanvasMode = S.mode === "canvas";
-  const duration = isCanvasMode ? 8 : S.hookDur + 1.2;
+  const duration = isCanvasMode ? 8 : S.hookDur + 1.2; // +1,2 s pour l'écran de fin
+  // rendu en pleine résolution 1080×1920
   const rc = document.createElement("canvas"); rc.width = 1080; rc.height = 1920;
   const rctx2 = rc.getContext("2d");
   const bigCover = document.createElement("canvas"); bigCover.width = bigCover.height = 800;
@@ -619,7 +688,7 @@ function buildKit() {
 
 /* ============ PRÊT ============ */
 function updateReady() {
-  const ok = !!S.buffer && $("songTitle").value.trim().length > 0;
+  const ok = !!S.audioEl && S.duration > 0 && $("songTitle").value.trim().length > 0;
   $("playBtn").disabled = !ok;
   $("exportBtn").disabled = !ok;
 }
