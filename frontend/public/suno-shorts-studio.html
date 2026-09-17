@@ -15,8 +15,7 @@
   .card { background: #121722; border: 1px solid #232b3b; border-radius: 14px; padding: 20px; margin-bottom: 20px; }
   .card h2 { font-size: 15px; margin: 0 0 14px; color: #9fb2d9; text-transform: uppercase; letter-spacing: 0.06em; }
   label { display: block; font-size: 13px; color: #8b95a7; margin: 12px 0 4px; }
-  input[type=text], textarea { width: 100%; background: #0b0e14; border: 1px solid #2a344a; border-radius: 8px; color: #e7ecf3; padding: 10px; font-size: 14px; font-family: inherit; }
-  textarea { min-height: 130px; resize: vertical; }
+  input[type=text] { width: 100%; background: #0b0e14; border: 1px solid #2a344a; border-radius: 8px; color: #e7ecf3; padding: 10px; font-size: 14px; font-family: inherit; }
   .drop { border: 2px dashed #2a344a; border-radius: 12px; padding: 28px; text-align: center; color: #8b95a7; cursor: pointer; transition: border-color .15s; }
   .drop.over { border-color: #5b8cff; color: #cdd8f2; }
   .drop.has { border-style: solid; border-color: #2f6b4f; color: #bfe8d2; }
@@ -34,11 +33,13 @@
   canvas.coverPreview { width: 150px; height: 150px; border-radius: 10px; }
   .stepnum { color: #5b8cff; font-weight: 700; margin-right: 6px; }
   select { background: #0b0e14; border: 1px solid #2a344a; border-radius: 8px; color: #e7ecf3; padding: 8px; font-size: 14px; }
+  input[type=range] { width: 100%; accent-color: #5b8cff; }
+  .hint { font-size: 12px; color: #6b7590; margin-top: 6px; }
 </style>
 </head>
 <body>
 <h1>🎬 Suno Shorts Studio</h1>
-<p class="sub">Dépose un morceau + colle tes paroles Suno → pochette, sous-titres, vidéo verticale et kit de publication générés automatiquement. 100% gratuit, tout se passe dans ton navigateur.</p>
+<p class="sub">Dépose un morceau → pochette, vidéo verticale et kit de publication générés automatiquement. 100% gratuit, tout dans ton navigateur.</p>
 
 <div class="grid">
   <div>
@@ -52,29 +53,54 @@
     <div class="card">
       <h2><span class="stepnum">2</span>Infos du morceau</h2>
       <label>Titre du morceau *</label>
-      <input type="text" id="songTitle" placeholder="Ex : Nuit Électrique">
+      <input type="text" id="songTitle" placeholder="Ex : Coco en la orilla">
       <label>Nom d'artiste</label>
       <input type="text" id="artist" placeholder="Ton nom d'artiste">
-      <label>Paroles (copier-coller direct depuis Suno, tags [Verse]/[Chorus] acceptés)</label>
-      <textarea id="lyrics" placeholder="[Verse]&#10;Colle ici tes paroles...&#10;&#10;[Chorus]&#10;Les tags seront ignorés automatiquement"></textarea>
-      <label>Lien Spotify du morceau (optionnel, pour la description)</label>
+      <label>Lien Spotify du morceau (optionnel)</label>
       <input type="text" id="spotifyLink" placeholder="https://open.spotify.com/track/...">
     </div>
 
     <div class="card">
-      <h2><span class="stepnum">3</span>Pochette générée</h2>
-      <div class="row">
+      <h2><span class="stepnum">3</span>Visuel</h2>
+      <label>Ambiance de la pochette</label>
+      <select id="themeSel">
+        <option value="auto">🎯 Auto (détecté via le titre)</option>
+        <option value="sunset">🌅 Plage / coucher de soleil</option>
+        <option value="mer">🌊 Mer / océan</option>
+        <option value="nuit">🌙 Nuit / étoiles</option>
+        <option value="melancolie">🎹 Mélancolie / piano</option>
+        <option value="amour">❤️ Amour</option>
+        <option value="ville">🌆 Ville / néons</option>
+        <option value="nature">🌿 Nature</option>
+        <option value="feu">🔥 Feu / énergie</option>
+        <option value="or">✨ Or / triomphe</option>
+      </select>
+      <div class="row" style="margin-top:14px">
         <canvas id="coverPreview" class="coverPreview" width="300" height="300"></canvas>
         <div>
-          <p style="font-size:13px;color:#8b95a7;max-width:230px;margin:0 0 8px">Générée à partir du thème des paroles et du titre. Re-génère pour une variante.</p>
           <button class="ghost" id="regenCover">🎲 Variante</button>
           <button class="ghost" id="dlCover">⬇️ PNG 3000×3000</button>
+          <div class="hint">Ou utilise ta propre image de fond (ex. générée avec ChatGPT) :</div>
+          <button class="ghost" id="customImgBtn">📷 Ma propre image</button>
+          <input type="file" id="customImg" accept="image/*" hidden>
         </div>
       </div>
     </div>
 
     <div class="card">
-      <h2><span class="stepnum">4</span>Kit de publication</h2>
+      <h2><span class="stepnum">4</span>Passage utilisé</h2>
+      <label>Début de l'extrait : <span id="hookStartLabel">auto</span></label>
+      <input type="range" id="hookStart" min="0" max="100" value="0" step="1" disabled>
+      <label>Durée (secondes)</label>
+      <input type="range" id="hookDur" min="10" max="40" value="30" step="1" disabled>
+      <div class="row" style="margin-top:8px">
+        <button class="ghost" id="autoHook" disabled>🎯 Revenir au choix auto</button>
+      </div>
+      <div class="status" id="analysis">En attente d'un fichier audio…</div>
+    </div>
+
+    <div class="card">
+      <h2><span class="stepnum">5</span>Kit de publication</h2>
       <div id="kit"></div>
     </div>
   </div>
@@ -84,11 +110,11 @@
       <h2>Aperçu vidéo 9:16</h2>
       <div id="previewWrap"><canvas id="preview" width="540" height="960"></canvas></div>
       <div class="row" style="margin-top:12px; justify-content:center">
-        <button id="playBtn" disabled>▶️ Prévisualiser l'extrait</button>
+        <button id="playBtn" disabled>▶️ Prévisualiser</button>
       </div>
       <div class="row" style="margin-top:8px; justify-content:center">
         <select id="mode">
-          <option value="short">Short TikTok / YouTube (~30 s, avec paroles)</option>
+          <option value="short">Short TikTok / YouTube (~30 s)</option>
           <option value="canvas">Spotify Canvas (8 s, sans texte)</option>
         </select>
       </div>
@@ -97,43 +123,33 @@
       </div>
       <div class="status" id="renderStatus"></div>
     </div>
-    <div class="card">
-      <h2>Analyse du morceau</h2>
-      <div id="analysis" class="status">En attente d'un fichier audio…</div>
-    </div>
   </div>
 </div>
 
 <script>
 "use strict";
-/* ============ ÉTAT GLOBAL ============ */
+/* ============ ÉTAT ============ */
 const S = {
-  buffer: null,          // AudioBuffer décodé (optionnel — analyse fine)
-  audioEl: null,         // <audio> pour lecture/preview
-  actx: null,            // AudioContext
-  analyser: null,        // AnalyserNode temps réel
+  buffer: null, audioEl: null, actx: null, analyser: null,
   srcNode: null, recDest: null,
-  energy: [],            // énergie RMS par tranche de 100 ms
-  duration: 0,
-  hookStart: 0, hookDur: 30,
-  bpm: 0,
-  lyricLines: [],        // lignes nettoyées avec timing
-  coverSeed: undefined,  // graine pochette (undefined = dérivée du contenu)
-  mode: "short",
-  recording: false,
+  energy: [], duration: 0,
+  hookStart: 0, hookDur: 30, bpm: 0,
+  autoHookStart: 0,
+  coverSeed: undefined, customImage: null,
+  scenes: [],            // canvases de scènes pour la vidéo
+  mode: "short", recording: false,
 };
 
 const $ = id => document.getElementById(id);
 const drop = $("drop"), fileInput = $("file");
 const preview = $("preview"), pctx = preview.getContext("2d");
 
-/* ============ UTILITAIRES ============ */
 function hashStr(str) { let h = 2166136261; for (let i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; }
 function mulberry32(a) { return function() { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
 function setStatus(el, msg, cls) { el.textContent = msg; el.className = "status " + (cls || ""); }
 function fmtTime(s) { return Math.floor(s / 60) + ":" + String(Math.floor(s % 60)).padStart(2, "0"); }
 
-/* ============ 1. CHARGEMENT AUDIO (compatible iOS/Safari) ============ */
+/* ============ 1. AUDIO (compatible iOS) ============ */
 drop.addEventListener("click", () => fileInput.click());
 drop.addEventListener("dragover", e => { e.preventDefault(); drop.classList.add("over"); });
 drop.addEventListener("dragleave", () => drop.classList.remove("over"));
@@ -144,57 +160,37 @@ async function loadAudio(file) {
   try {
     setStatus($("fileStatus"), "Chargement de « " + file.name + " »…");
     S.actx = S.actx || new (window.AudioContext || window.webkitAudioContext)();
-
     if (S.audioEl) S.audioEl.remove();
     S.audioEl = new Audio(URL.createObjectURL(file));
     S.audioEl.crossOrigin = "anonymous";
 
-    if (!S.srcNode) {
-      S.srcNode = S.actx.createMediaElementSource(S.audioEl);
-      S.analyser = S.actx.createAnalyser();
-      S.analyser.fftSize = 256;
-      S.srcNode.connect(S.analyser);
-      S.analyser.connect(S.actx.destination);
-      S.recDest = S.actx.createMediaStreamDestination();
-      S.analyser.connect(S.recDest);
-    } else {
-      // nouvelle source audio : on repart d'un AudioContext propre
-      try { S.actx.close(); } catch (e) {}
-      S.actx = new (window.AudioContext || window.webkitAudioContext)();
-      S.srcNode = S.actx.createMediaElementSource(S.audioEl);
-      S.analyser = S.actx.createAnalyser();
-      S.analyser.fftSize = 256;
-      S.srcNode.connect(S.analyser);
-      S.analyser.connect(S.actx.destination);
-      S.recDest = S.actx.createMediaStreamDestination();
-      S.analyser.connect(S.recDest);
-    }
+    if (S.srcNode) { try { S.actx.close(); } catch (e) {} S.actx = new (window.AudioContext || window.webkitAudioContext)(); }
+    S.srcNode = S.actx.createMediaElementSource(S.audioEl);
+    S.analyser = S.actx.createAnalyser(); S.analyser.fftSize = 256;
+    S.srcNode.connect(S.analyser); S.analyser.connect(S.actx.destination);
+    S.recDest = S.actx.createMediaStreamDestination(); S.analyser.connect(S.recDest);
 
-    // durée via l'élément audio (fiable sur iOS, contrairement à decodeAudioData)
     await new Promise((res, rej) => {
       if (S.audioEl.readyState >= 1 && isFinite(S.audioEl.duration) && S.audioEl.duration > 0) return res();
       S.audioEl.addEventListener("loadedmetadata", res, { once: true });
-      S.audioEl.addEventListener("error", () => rej(new Error("fichier audio illisible par Safari")), { once: true });
+      S.audioEl.addEventListener("error", () => rej(new Error("fichier audio illisible")), { once: true });
       S.audioEl.load();
-      setTimeout(() => rej(new Error("délai dépassé au chargement")), 20000);
+      setTimeout(() => rej(new Error("délai dépassé")), 20000);
     });
     S.duration = S.audioEl.duration;
 
-    // analyse fine (BPM, hook) : optionnelle — si le décodage échoue sur ce navigateur, mode simple
     try {
       const buf = await file.arrayBuffer();
       S.buffer = await S.actx.decodeAudioData(buf);
       analyzeAudio();
     } catch (e) {
       S.buffer = null;
-      S.hookStart = 0; S.hookDur = Math.min(30, S.duration || 30); S.bpm = 0;
-      $("analysis").innerHTML =
-        '<span class="pill">⏱ ' + fmtTime(S.duration) + "</span>" +
-        '<span class="pill"> 🔥 Extrait : 0:00 → ' + fmtTime(S.hookDur) + "</span>" +
-        '<div class="status">Mode simple : analyse fine non supportée par ce navigateur, les 30 premières secondes sont utilisées.</div>';
-      scheduleLyrics();
+      S.bpm = 0;
+      setHook(0, Math.min(30, S.duration || 30));
+      $("analysis").innerHTML = '<span class="pill">⏱ ' + fmtTime(S.duration) + "</span><div class='status'>Mode simple (analyse fine non supportée) : ajuste le début de l'extrait avec le curseur.</div>";
       buildKit();
     }
+    setupHookUI();
 
     drop.classList.add("has");
     drop.innerHTML = "🎵 " + file.name + "<br><small>" + fmtTime(S.duration) + " — clique pour remplacer</small>";
@@ -205,18 +201,16 @@ async function loadAudio(file) {
   }
 }
 
-/* ============ ANALYSE : ÉNERGIE + HOOK + BPM (si décodage possible) ============ */
+/* ============ ANALYSE ============ */
 function analyzeAudio() {
-  const data = S.buffer.getChannelData(0);
-  const sr = S.buffer.sampleRate;
-  const win = Math.floor(sr * 0.1); // tranches de 100 ms
+  const data = S.buffer.getChannelData(0), sr = S.buffer.sampleRate;
+  const win = Math.floor(sr * 0.1);
   S.energy = [];
   for (let i = 0; i + win <= data.length; i += win) {
     let sum = 0;
     for (let j = 0; j < win; j += 4) { const v = data[i + j]; sum += v * v; }
     S.energy.push(Math.sqrt(sum / (win / 4)));
   }
-  // lissage
   const sm = S.energy.map((v, i) => {
     let s = 0, n = 0;
     for (let k = Math.max(0, i - 5); k <= Math.min(S.energy.length - 1, i + 5); k++) { s += S.energy[k]; n++; }
@@ -224,121 +218,134 @@ function analyzeAudio() {
   });
   S.energy = sm;
 
-  // HOOK : fenêtre glissante de 30 s à plus forte énergie
-  if (S.duration > 35) {
-    S.hookDur = 30;
-    const winN = Math.min(300, S.energy.length);
-    let best = 0, bestSum = -1;
-    let acc = S.energy.slice(0, winN).reduce((a, b) => a + b, 0);
-    for (let start = 0; start + winN <= S.energy.length; start++) {
-      if (acc > bestSum) { bestSum = acc; best = start; }
+  // HOOK v2 : énergie moyenne pondérée par la constance (favorise refrain vs pic bref),
+  // recherche après les 15 premières secondes pour éviter les intros
+  if (S.duration > 45) {
+    const winN = 300;
+    let best = 150, bestScore = -1; // 15 s minimum
+    let acc = S.energy.slice(150, 150 + winN).reduce((a, b) => a + b, 0);
+    for (let start = 150; start + winN <= S.energy.length; start++) {
+      const mean = acc / winN;
+      let varSum = 0;
+      for (let k = start; k < start + winN; k += 10) { const d = S.energy[k] - mean; varSum += d * d; }
+      const score = mean * Math.sqrt(mean) / (1 + varSum / 100); // fort + stable
+      if (score > bestScore) { bestScore = score; best = start; }
       acc += S.energy[start + winN] - S.energy[start];
     }
-    // recule jusqu'à une vallée locale (départ naturel) dans les 8 s précédentes
     let s = best;
-    for (let k = best; k > Math.max(30, best - 80); k--) { if (S.energy[k] < S.energy[s]) s = k; }
-    S.hookStart = s * 0.1;
+    for (let k = best; k > Math.max(150, best - 80); k--) { if (S.energy[k] < S.energy[s]) s = k; }
+    S.autoHookStart = s * 0.1;
   } else {
-    S.hookStart = 0; S.hookDur = S.duration;
+    S.autoHookStart = 0;
   }
-  if (S.hookStart + S.hookDur > S.duration) S.hookStart = Math.max(0, S.duration - S.hookDur);
+  let hs = S.autoHookStart, hd = Math.min(30, Math.max(10, S.duration));
+  if (hs + hd > S.duration) hs = Math.max(0, S.duration - hd);
+  setHook(hs, hd);
 
-  // BPM approximatif : autocorrélation de l'enveloppe d'onsets (60–180 BPM)
+  // BPM
   const onsets = S.energy.map((v, i) => i === 0 ? 0 : Math.max(0, v - S.energy[i - 1]));
   let bestBpm = 0, bestScore = -1;
-  for (let bpmCand = 60; bpmCand <= 180; bpmCand++) {
-    const lag = Math.round(60 / bpmCand / 0.1);
+  for (let c = 60; c <= 180; c++) {
+    const lag = Math.round(60 / c / 0.1);
     let sc = 0;
     for (let i = lag; i < onsets.length; i++) sc += onsets[i] * onsets[i - lag];
-    if (sc > bestScore) { bestScore = sc; bestBpm = bpmCand; }
+    if (sc > bestScore) { bestScore = sc; bestBpm = c; }
   }
   S.bpm = bestBpm;
 
   $("analysis").innerHTML =
     '<span class="pill">⏱ ' + fmtTime(S.duration) + "</span>" +
     '<span class="pill"> BPM ≈ ' + S.bpm + "</span>" +
-    '<span class="pill"> 🔥 Extrait : ' + fmtTime(S.hookStart) + " → " + fmtTime(S.hookStart + S.hookDur) + "</span>" +
-    '<div class="status">Le passage le plus fort du morceau est sélectionné automatiquement.</div>';
-  scheduleLyrics();
+    '<span class="pill"> 🔥 Auto : ' + fmtTime(S.autoHookStart) + "</span>";
   buildKit();
 }
 
-/* ============ 2. PAROLES → SOUS-TITRES ============ */
-function parseLyrics() {
-  return $("lyrics").value.split(/\r?\n/)
-    .map(l => l.replace(/\[.*?\]/g, "").trim()) // retire les tags Suno [Verse] etc.
-    .filter(l => l.length > 0);
+function setHook(start, dur) {
+  S.hookStart = Math.max(0, start); S.hookDur = dur;
+  if (S.hookStart + S.hookDur > S.duration) S.hookStart = Math.max(0, S.duration - S.hookDur);
+  $("hookStartLabel").textContent = fmtTime(S.hookStart);
+  $("hookStart").value = Math.floor(S.hookStart);
+  $("hookDur").value = Math.floor(S.hookDur);
 }
-// Distribue les lignes sur l'extrait, pondérées par longueur (approximation : Suno ne fournit pas de timestamps)
-function scheduleLyrics() {
-  const lines = parseLyrics();
-  if (!lines.length || !S.duration) { S.lyricLines = []; return; }
-  const totalWeight = lines.reduce((a, l) => a + l.length + 10, 0);
-  let t = 0;
-  S.lyricLines = lines.map(l => { const d = (l.length + 10) / totalWeight * S.hookDur; const o = { text: l, t0: t, t1: t + d }; t += d; return o; });
-}
-function lyricAt(time) {
-  for (const l of S.lyricLines) if (time >= l.t0 && time < l.t1) return l.text;
-  return null;
+function setupHookUI() {
+  const hs = $("hookStart"), hd = $("hookDur");
+  hs.max = Math.max(0, Math.floor(S.duration - 10));
+  hd.max = Math.min(40, Math.floor(S.duration));
+  hs.disabled = false; hd.disabled = false; $("autoHook").disabled = false;
+  hs.addEventListener("input", () => { S.hookStart = +hs.value; $("hookStartLabel").textContent = fmtTime(S.hookStart); });
+  hd.addEventListener("input", () => { S.hookDur = +hd.value; if (S.hookStart + S.hookDur > S.duration) { S.hookStart = Math.max(0, S.duration - S.hookDur); hs.value = Math.floor(S.hookStart); $("hookStartLabel").textContent = fmtTime(S.hookStart); } });
+  $("autoHook").addEventListener("click", () => setHook(S.autoHookStart, Math.min(30, S.duration)));
 }
 
-/* ============ 3. POCHETTE SÉMANTIQUE (liée aux paroles) ============ */
-const STOPWORDS = new Set(("le la les un une des du de d l et ou mais donc or ni car ne pas plus moins très bien tout tous toute toutes ce cet cette ces mon ma mes ton ta tes son sa ses notre nos votre vos leur leurs qui que quoi dont où je tu il elle on nous vous ils elles me te se lui y en a à au aux avec sans sous sur pour par est suis es sommes êtes sont était être ai as avons avez ont avoir fait faire va vais vas vont aller c'est j'ai n'est qu'il s'il the a an and or but of to in on at for with without from is are was were be been being it its this that these those i you he she we they me him her them my your his our their as if so no not do does did done have has had will would can could should just like get got go going know think see seen say said what which who whom when where why how all any both each few more most other some such only own same than too very s t don now").split(" "));
+/* ============ 2. THÈMES VISUELS (FR + EN + ES) ============ */
+const THEMES = {
+  sunset:     { name: "plage / coucher de soleil", hue: [12, 40],  motif: "sunset", words: "plage beach coco orilla shore sable sand soleil sun atardecer puesta verano summer chaleur tropical isla island mer douce".split(" ") },
+  mer:        { name: "mer / océan",               hue: [180, 215],motif: "waves",  words: "mer mar sea océan ocean ola wave vague agua eau bleu azul profond deep rivière río navire bateau tempête storm marea".split(" ") },
+  nuit:       { name: "nuit / étoiles",            hue: [220, 260],motif: "stars",  words: "nuit noche dark noir oscuro étoile estrella luna moon sombra midnight medianoche rêve sueño sueño dream silence dormir galaxy cosmos".split(" ") },
+  melancolie: { name: "mélancolie / piano",        hue: [205, 235],motif: "rain",   words: "triste tristeza sad piano ballad mélancolie melancolía larme lágrima pleure llorar douleur dolor perdu perdido seul solo nostalgia recuerdo corazón souvenir adieu despedida".split(" ") },
+  amour:      { name: "amour",                     hue: [330, 360],motif: "hearts", words: "amour amor love aime corazón heart kiss beso tendre doux passion désir forever siempre ensemble juntos".split(" ") },
+  ville:      { name: "ville / néons",             hue: [255, 290],motif: "city",   words: "ville ciudad rue calle néon neon urbain urbano métro taxi building foule mundo world people luz luces".split(" ") },
+  nature:     { name: "nature",                    hue: [85, 145], motif: "leaves", words: "vert verde arbre árbol forêt bosque feuille hoja nature vent viento ciel cielo printemps primavera fleur flor jardin montagne".split(" ") },
+  feu:        { name: "feu / énergie",             hue: [5, 45],   motif: "rays",   words: "feu fuego flamme llama brûle arde chaud heat rage furia colère sangre blood rouge rojo explosion boom".split(" ") },
+  or:         { name: "or / triomphe",             hue: [40, 60],  motif: "rays",   words: "or gold oro golden roi rey couronne corona shine brille glory gloire diamant winner victoire victoria win legend leyenda".split(" ") },
+};
 
-// Thèmes visuels : mots-clés des paroles → palette + motifs liés au sens
-const THEMES = [
-  { name: "nuit",   hue: [220, 260], motif: "stars",  words: "nuit night dark noir étoile star lune moon sombre shadow midnight minuit rêve dream silence dormir sleep insomnia insomnie clair galaxy galaxie cosmos space espace nebula nébuleuse".split(" ") },
-  { name: "feu",    hue: [5, 45],   motif: "rays",   words: "feu fire flamme flame brûle burn burning chaud heat enfer hell rage fury colère sang blood red rouge explosion bang boom".split(" ") },
-  { name: "mer",    hue: [180, 215],motif: "waves",  words: "mer sea océan ocean vague wave eau water pluie rain noyer drown bleu blue profond deep rivière river plage beach marée tide tempête storm".split(" ") },
-  { name: "amour",  hue: [330, 360],motif: "hearts", words: "amour love aime aimer heart cœur reine queen chérie darling bébé baby kiss embrasse tendre doux passion désir forever toujours ensemble together".split(" ") },
-  { name: "ville",  hue: [255, 290],motif: "city",   words: "ville city rue street béton bitume néon neon lumière lights urbain urban métro taxi building gratte-ciel crowd foule monde world people".split(" ") },
-  { name: "nature", hue: [85, 145], motif: "leaves", words: "vert green arbre tree forêt forest feuille leaf nature vent wind ciel sky soleil sun printemps été summer fleur flower rose jardin garden herbe grass terre ground montagne mountain".split(" ") },
-  { name: "triste", hue: [200, 235],motif: "rain",   words: "triste sad larme tear pleure cry crying pleurs peine douleur pain perdu lost seul lonely solitude adieu goodbye partir leave mémoire memory souvenir regret vide empty".split(" ") },
-  { name: "or",     hue: [40, 60],  motif: "rays",   words: "or gold golden roi king couronne crown shine brille shining bright lumière light glory gloire diamant diamond winner victoire win legend légende étoile star".split(" ") },
-];
-
-// Extrait les mots-clés (fréquence, sans stopwords) des paroles
-function extractKeywords(lyrics, maxN) {
-  const freq = new Map();
-  (lyrics.toLowerCase().replace(/[^\p{L}\s'-]/gu, " ").split(/\s+/)).forEach(w => {
-    w = w.replace(/^[-']+|[-']+$/g, "");
-    if (w.length < 3 || STOPWORDS.has(w)) return;
-    freq.set(w, (freq.get(w) || 0) + 1);
-  });
-  return [...freq.entries()].sort((a, b) => b[1] - a[1]).slice(0, maxN || 5).map(e => e[0]);
-}
-
-// Choisit un thème visuel selon les mots-clés des paroles
-function pickTheme(lyrics, seed) {
-  const lower = " " + lyrics.toLowerCase() + " ";
+function currentThemeKey() {
+  const sel = $("themeSel").value;
+  if (sel !== "auto") return sel;
+  const lower = " " + ($("songTitle").value || "").toLowerCase() + " ";
   let best = null, bestHits = 0;
-  for (const th of THEMES) {
+  for (const [key, th] of Object.entries(THEMES)) {
     let hits = 0;
     for (const w of th.words) { hits += lower.split(" " + w).length - 1; }
-    if (hits > bestHits) { bestHits = hits; best = th; }
+    if (hits > bestHits) { bestHits = hits; best = key; }
   }
-  if (best) return best;
-  return THEMES[seed % THEMES.length];
+  return best || "sunset";
 }
 
+/* ============ 3. POCHETTE ============ */
 function drawCover(ctx, size, seed) {
   const title = ($("songTitle").value || "").trim();
-  const lyrics = $("lyrics").value || "";
-  const baseSeed = seed === undefined ? hashStr(title + "|" + lyrics) : seed;
+  const themeKey = currentThemeKey();
+  const theme = THEMES[themeKey];
+  const baseSeed = seed === undefined ? hashStr(title + "|" + themeKey) : seed;
   const rnd = mulberry32(baseSeed);
-  const theme = pickTheme(lyrics, baseSeed);
-  const keywords = extractKeywords(lyrics, 4);
   const hue = theme.hue[0] + Math.floor(rnd() * (theme.hue[1] - theme.hue[0]));
 
-  // fond dégradé dans la palette du thème
   const bg = ctx.createLinearGradient(0, 0, size * 0.3, size);
   bg.addColorStop(0, "hsl(" + hue + ",55%," + (8 + rnd() * 8) + "%)");
   bg.addColorStop(1, "hsl(" + ((hue + 25) % 360) + ",60%," + (16 + rnd() * 10) + "%)");
   ctx.fillStyle = bg; ctx.fillRect(0, 0, size, size);
 
-  // MOTIF lié au thème
   ctx.save();
-  if (theme.motif === "stars") {
+  if (theme.motif === "sunset") {
+    // grand soleil sur l'horizon + reflets sur l'eau
+    const sunY = size * (0.42 + rnd() * 0.12);
+    const sg = ctx.createRadialGradient(size / 2, sunY, 0, size / 2, sunY, size * 0.35);
+    sg.addColorStop(0, "hsl(" + ((hue + 8) % 360) + ",95%,72%)");
+    sg.addColorStop(0.5, "hsl(" + hue + ",90%,58%)");
+    sg.addColorStop(1, "hsl(" + hue + ",90%,58%,0)");
+    ctx.fillStyle = sg; ctx.fillRect(0, 0, size, size);
+    ctx.fillStyle = "hsl(" + ((hue + 8) % 360) + ",95%,78%)";
+    ctx.beginPath(); ctx.arc(size / 2, sunY, size * (0.08 + rnd() * 0.05), 0, Math.PI * 2); ctx.fill();
+    // bande d'eau plus sombre + reflets
+    ctx.fillStyle = "hsla(" + ((hue + 190) % 360) + ",50%,12%,0.75)";
+    ctx.fillRect(0, sunY + size * 0.06, size, size);
+    for (let i = 0; i < 22; i++) {
+      const y = sunY + size * 0.08 + i * size * 0.02;
+      ctx.globalAlpha = 0.25 - i * 0.01;
+      ctx.fillStyle = "hsl(" + ((hue + 5) % 360) + ",90%,65%)";
+      const w = size * (0.04 + rnd() * 0.1);
+      ctx.fillRect(size / 2 - w / 2 + (rnd() - 0.5) * size * 0.12, y, w, size * 0.006);
+    }
+    // nuages fins
+    for (let i = 0; i < 5; i++) {
+      ctx.globalAlpha = 0.12 + rnd() * 0.15;
+      ctx.fillStyle = "hsl(" + ((hue + 15) % 360) + ",60%,80%)";
+      const cy = rnd() * sunY * 0.8, cw = size * (0.15 + rnd() * 0.3);
+      ctx.beginPath(); ctx.ellipse(rnd() * size, cy, cw, size * 0.012, 0, 0, Math.PI * 2); ctx.fill();
+    }
+  } else if (theme.motif === "stars") {
     for (let i = 0; i < 140; i++) {
       const x = rnd() * size, y = rnd() * size, r = rnd() * size * 0.006 + size * 0.001;
       ctx.globalAlpha = 0.25 + rnd() * 0.75;
@@ -391,7 +398,6 @@ function drawCover(ctx, size, seed) {
       const w = size * (0.05 + rnd() * 0.12), h = size * (0.15 + rnd() * 0.4);
       ctx.fillStyle = "hsl(" + hue + ",40%," + (10 + rnd() * 12) + "%)";
       ctx.fillRect(x, size - h, w, h);
-      // fenêtres allumées
       ctx.fillStyle = "hsl(" + ((hue + 150) % 360) + ",90%,70%)";
       for (let wy = size - h + size * 0.03; wy < size - size * 0.02; wy += size * 0.045)
         for (let wx = x + size * 0.012; wx < x + w - size * 0.015; wx += size * 0.038)
@@ -420,28 +426,13 @@ function drawCover(ctx, size, seed) {
   }
   ctx.restore();
 
-  // halo derrière le titre
   const g = ctx.createRadialGradient(size / 2, size * 0.48, 0, size / 2, size * 0.48, size * 0.55);
   g.addColorStop(0, "rgba(0,0,0,0.45)"); g.addColorStop(0.7, "rgba(0,0,0,0.15)"); g.addColorStop(1, "rgba(0,0,0,0)");
   ctx.fillStyle = g; ctx.fillRect(0, 0, size, size);
 
-  // MOTS-CLÉS des paroles, dispersés en filigrane
-  if (keywords.length) {
-    ctx.textAlign = "center";
-    keywords.forEach(kw => {
-      ctx.save();
-      ctx.globalAlpha = 0.10 + rnd() * 0.12;
-      ctx.translate(size * (0.15 + rnd() * 0.7), size * (0.15 + rnd() * 0.55));
-      ctx.rotate((rnd() - 0.5) * 0.9);
-      ctx.font = "800 italic " + Math.floor(size * (0.07 + rnd() * 0.08)) + "px Inter, system-ui, sans-serif";
-      ctx.fillStyle = "#fff";
-      ctx.fillText(kw, 0, 0);
-      ctx.restore();
-    });
-  }
-
-  // TITRE en grande typographie
+  // TITRE
   ctx.textAlign = "center"; ctx.textBaseline = "middle";
+  const title = ($("songTitle").value || "").trim();
   if (title) {
     const words = title.split(/\s+/);
     const maxW = size * 0.82; const lines = []; let cur = "";
@@ -460,29 +451,50 @@ function drawCover(ctx, size, seed) {
       ctx.fillText(l.toUpperCase(), size / 2, y);
       ctx.shadowBlur = 0;
     });
-    // liseré accent sous le titre, couleur du thème
     ctx.fillStyle = "hsl(" + ((hue + 40) % 360) + ",90%,65%)";
     ctx.fillRect(size * 0.35, size * 0.47 + (lines.length / 2) * fs * 1.15 + size * 0.02, size * 0.3, size * 0.012);
   }
-  // nom d'artiste en haut
   const artist = ($("artist").value || "").trim();
   if (artist) {
     ctx.font = "600 " + Math.floor(size * 0.028) + "px Inter, system-ui, sans-serif";
     ctx.fillStyle = "rgba(255,255,255,0.75)";
     ctx.fillText(artist.toUpperCase(), size / 2, size * 0.075);
   }
-  // badge thème discret en bas
-  ctx.font = "500 " + Math.floor(size * 0.02) + "px Inter, system-ui, sans-serif";
-  ctx.fillStyle = "rgba(255,255,255,0.55)";
-  ctx.fillText("ambiance : " + theme.name, size / 2, size * 0.955);
 }
 
 const coverPreview = $("coverPreview"), cctx = coverPreview.getContext("2d");
-function renderCover() { drawCover(cctx, 300, S.coverSeed); renderFrame(-1); }
+function renderCover() {
+  if (S.customImage) { cctx.drawImage(S.customImage, 0, 0, 300, 300); }
+  else drawCover(cctx, 300, S.coverSeed);
+  buildScenes(); renderFrame(-1);
+}
+function buildScenes() {
+  // 3 scènes : soit l'image perso (recadrée en zoom variés), soit 3 variantes de pochette
+  S.scenes = [];
+  if (S.customImage) {
+    for (let i = 0; i < 3; i++) {
+      const c = document.createElement("canvas"); c.width = c.height = 800;
+      const cx = c.getContext("2d");
+      const z = 1 + i * 0.15;
+      const sw = 800 / z, sh = 800 / z;
+      const sx = (800 - sw) * (i === 1 ? 0.7 : i === 2 ? 0.3 : 0.5), sy = (800 - sh) * (i === 0 ? 0.7 : 0.4);
+      cx.drawImage(S.customImage, sx, sy, sw, sh, 0, 0, 800, 800);
+      S.scenes.push(c);
+    }
+  } else {
+    const themeKey = currentThemeKey();
+    const base = S.coverSeed === undefined ? hashStr(($("songTitle").value || "") + "|" + themeKey) : S.coverSeed;
+    for (let i = 0; i < 3; i++) {
+      const c = document.createElement("canvas"); c.width = c.height = 800;
+      drawCover(c.getContext("2d"), 800, base + i * 977);
+      S.scenes.push(c);
+    }
+  }
+}
 
-$("songTitle").addEventListener("input", () => { S.coverSeed = undefined; scheduleLyrics(); renderCover(); buildKit(); updateReady(); });
-$("lyrics").addEventListener("input", () => { scheduleLyrics(); renderCover(); buildKit(); });
-$("artist").addEventListener("input", buildKit);
+$("songTitle").addEventListener("input", () => { S.coverSeed = undefined; renderCover(); buildKit(); updateReady(); });
+$("artist").addEventListener("input", () => { renderCover(); buildKit(); });
+$("themeSel").addEventListener("change", () => { S.coverSeed = undefined; renderCover(); });
 $("spotifyLink").addEventListener("input", buildKit);
 $("regenCover").addEventListener("click", () => {
   S.coverSeed = (S.coverSeed === undefined ? (Math.random() * 1e9) | 0 : S.coverSeed) + 7;
@@ -490,18 +502,22 @@ $("regenCover").addEventListener("click", () => {
 });
 $("dlCover").addEventListener("click", () => {
   const c = document.createElement("canvas"); c.width = c.height = 3000;
-  drawCover(c.getContext("2d"), 3000, S.coverSeed);
+  if (S.customImage) c.getContext("2d").drawImage(S.customImage, 0, 0, 3000, 3000);
+  else drawCover(c.getContext("2d"), 3000, S.coverSeed);
   const a = document.createElement("a");
   a.href = c.toDataURL("image/png"); a.download = ($("songTitle").value || "pochette") + "-3000x3000.png"; a.click();
 });
+$("customImgBtn").addEventListener("click", () => $("customImg").click());
+$("customImg").addEventListener("change", e => {
+  const f = e.target.files[0]; if (!f) return;
+  const img = new Image();
+  img.onload = () => { S.customImage = img; renderCover(); };
+  img.src = URL.createObjectURL(f);
+});
 
 /* ============ 4. RENDU VIDÉO ============ */
-let particles = [];
-function initParticles() { particles = Array.from({ length: 60 }, () => ({ x: Math.random(), y: Math.random(), vx: (Math.random() - .5) * .004, vy: (Math.random() - .5) * .004, r: Math.random() * .8 + .2 })); }
-initParticles();
-
 const freqData = new Uint8Array(128);
-function bands() { // basse / médium / aigu depuis l'analyseur temps réel
+function bands() {
   if (!S.analyser) return { bass: 0.4, mid: 0.3, treb: 0.2 };
   S.analyser.getByteFrequencyData(freqData);
   let b = 0, m = 0, t = 0;
@@ -511,88 +527,115 @@ function bands() { // basse / médium / aigu depuis l'analyseur temps réel
   return { bass: b / 8 / 255, mid: m / 24 / 255, treb: t / 64 / 255 };
 }
 
-// rendu paramétrable : partagé entre l'aperçu (540×960) et l'export (1080×1920)
-function renderTo(ctx, W, H, relTime, isCanvasMode, coverSrc) {
+function renderTo(ctx, W, H, relTime, isCanvasMode, sceneImgs) {
   const band = relTime >= 0 ? bands() : { bass: 0.4, mid: 0.3, treb: 0.2 };
-  const sc = W / 540; // facteur d'échelle des tailles
-  // fond : pochette agrandie + zoom pulsé sur la basse
+  const sc = W / 540;
+  const scenes = sceneImgs || S.scenes;
+  if (!scenes.length) return;
+
+  // durée de scène : coupure toutes les ~6 s, ou sur les beats si BPM connu
+  const sceneDur = S.bpm >= 60 ? Math.max(3, Math.round(16 * 60 / S.bpm)) : 6;
+  const t = Math.max(0, relTime);
+  const idx = Math.floor(t / sceneDur) % scenes.length;
+  const inScene = (t % sceneDur) / sceneDur; // 0→1 dans la scène
+
+  // Ken Burns : zoom lent 1.06→1.22, direction alternée par scène
+  const zoom = 1.06 + inScene * 0.16;
+  const dir = idx % 2 === 0 ? 1 : -1;
+  const panX = (inScene - 0.5) * 0.08 * dir;
+  const panY = (inScene - 0.5) * 0.05 * (idx % 3 === 0 ? -1 : 1);
+
   ctx.save();
-  const zoom = 1.15 + band.bass * 0.12;
-  const bs = Math.max(W, H) * zoom;
-  ctx.translate(W / 2, H / 2);
-  ctx.filter = "saturate(1.3) brightness(0.55)";
-  ctx.drawImage(coverSrc, -bs / 2, -bs / 2, bs, bs);
-  ctx.filter = "none"; ctx.restore();
-  // vignette sombre pour lisibilité
-  const vg = ctx.createRadialGradient(W / 2, H / 2, H * 0.2, W / 2, H / 2, H * 0.75);
-  vg.addColorStop(0, "rgba(0,0,0,0.1)"); vg.addColorStop(1, "rgba(0,0,0,0.65)");
-  ctx.fillStyle = vg; ctx.fillRect(0, 0, W, H);
-  // particules réactives
-  for (const p of particles) {
-    p.x += p.vx * (1 + band.treb * 6); p.y += p.vy * (1 + band.mid * 4);
-    if (p.x < -0.05) p.x = 1.05; if (p.x > 1.05) p.x = -0.05;
-    if (p.y < -0.05) p.y = 1.05; if (p.y > 1.05) p.y = -0.05;
-    ctx.beginPath();
-    ctx.fillStyle = "rgba(255,255,255," + (0.15 + band.bass * 0.5) + ")";
-    ctx.arc(p.x * W, p.y * H, p.r * (2 + band.bass * 10) * sc, 0, Math.PI * 2);
-    ctx.fill();
-  }
-  // anneau waveform réactif
-  const cx = W / 2, cy = H * 0.46, baseR = W * 0.30;
-  for (let a = 0; a < 64; a++) {
-    const ang = (a / 64) * Math.PI * 2;
-    const amp = (a < 16 ? band.bass : a < 40 ? band.mid : band.treb);
-    const r = baseR + amp * W * 0.16 * Math.sin(a * 0.9 + relTime * 3);
-    ctx.fillStyle = "rgba(255,255,255," + (0.35 + amp * 0.6) + ")";
-    ctx.beginPath(); ctx.arc(cx + Math.cos(ang) * r, cy + Math.sin(ang) * r, (2.5 + amp * 4) * sc, 0, Math.PI * 2); ctx.fill();
+  const bs = Math.max(W, H) * zoom * 1.1;
+  const ox = -panX * bs, oy = -panY * bs;
+  ctx.translate(W / 2 + ox, H / 2 + oy);
+  ctx.drawImage(scenes[idx], -bs / 2, -bs / 2, bs, bs);
+  ctx.filter = "saturate(1.25) brightness(" + (0.55 + band.bass * 0.15) + ")";
+  ctx.drawImage(scenes[idx], -bs / 2, -bs / 2, bs, bs);
+  ctx.filter = "none";
+  ctx.restore();
+
+  // fondu enchaîné en fin de scène (dernier 15 %)
+  const fade = Math.max(0, (inScene - 0.85) / 0.15);
+  if (fade > 0) {
+    const next = scenes[(idx + 1) % scenes.length];
+    ctx.save();
+    ctx.globalAlpha = fade;
+    const bs2 = Math.max(W, H) * 1.1;
+    ctx.translate(W / 2, H / 2);
+    ctx.filter = "saturate(1.25) brightness(0.55)";
+    ctx.drawImage(next, -bs2 / 2, -bs2 / 2, bs2, bs2);
+    ctx.filter = "none";
+    ctx.restore();
   }
 
+  // vignette + assombrissement bas pour le texte
+  const vg = ctx.createRadialGradient(W / 2, H / 0.9, H * 0.25, W / 2, H / 0.9, H * 0.85);
+  vg.addColorStop(0, "rgba(0,0,0,0.05)"); vg.addColorStop(1, "rgba(0,0,0,0.72)");
+  ctx.fillStyle = vg; ctx.fillRect(0, 0, W, H);
+
+  // spectre circulaire
+  const cx = W / 2, cy = H * 0.44, baseR = W * 0.30;
+  const bars = 56, rot = t * 0.15;
+  for (let i = 0; i < bars; i++) {
+    const ang = (i / bars) * Math.PI * 2 + rot;
+    const fi = Math.floor((i / bars) * 96);
+    let amp = freqData.length ? (freqData[fi] || 0) / 255 : 0.3;
+    if (relTime < 0) amp = 0.25 + 0.2 * Math.sin(i * 0.5);
+    const len = amp * W * 0.13 * (1 + band.bass * 0.6);
+    const r0 = baseR + W * 0.02, r1 = r0 + len;
+    ctx.strokeStyle = "rgba(255,255,255," + (0.25 + amp * 0.65) + ")";
+    ctx.lineWidth = 3 * sc;
+    ctx.lineCap = "round";
+    ctx.beginPath();
+    ctx.moveTo(cx + Math.cos(ang) * r0, cy + Math.sin(ang) * r0);
+    ctx.lineTo(cx + Math.cos(ang) * r1, cy + Math.sin(ang) * r1);
+    ctx.stroke();
+  }
+  // disque central discret (pulse basse)
+  ctx.beginPath();
+  ctx.fillStyle = "rgba(255,255,255," + (0.04 + band.bass * 0.08) + ")";
+  ctx.arc(cx, cy, baseR - W * 0.02, 0, Math.PI * 2);
+  ctx.fill();
+
   if (!isCanvasMode) {
-    // header titre + artiste
     const title = $("songTitle").value || "Titre du morceau";
     const artist = $("artist").value;
     ctx.textAlign = "center";
-    ctx.fillStyle = "rgba(255,255,255,0.95)";
-    ctx.font = "700 " + Math.floor(W * 0.075) + "px Inter, system-ui, sans-serif";
-    ctx.fillText(title, cx, H * 0.115);
+    // titre en bas (zone sûre TikTok)
+    ctx.font = "900 " + Math.floor(W * 0.082) + "px Inter, system-ui, sans-serif";
+    ctx.fillStyle = "#fff";
+    ctx.shadowColor = "rgba(0,0,0,0.85)"; ctx.shadowBlur = 18 * sc;
+    const tw = title.split(/\s+/); const tl = []; let cur = "";
+    for (const w of tw) { const t2 = cur ? cur + " " + w : w; if (ctx.measureText(t2).width > W * 0.86 && cur) { tl.push(cur); cur = w; } else cur = t2; }
+    tl.push(cur);
+    tl.forEach((l, i) => ctx.fillText(l.toUpperCase(), cx, H * 0.80 + i * W * 0.095));
     if (artist) {
-      ctx.font = "400 " + Math.floor(W * 0.045) + "px Inter, system-ui, sans-serif";
-      ctx.fillStyle = "rgba(255,255,255,0.7)";
-      ctx.fillText(artist, cx, H * 0.155);
+      ctx.font = "500 " + Math.floor(W * 0.042) + "px Inter, system-ui, sans-serif";
+      ctx.fillStyle = "rgba(255,255,255,0.85)";
+      ctx.fillText(artist, cx, H * 0.80 + tl.length * W * 0.095 + W * 0.01);
     }
-    // paroles karaoké (wrap sur plusieurs lignes si longue)
-    const line = relTime >= 0 ? lyricAt(Math.min(relTime, S.hookDur - 0.05)) : (S.lyricLines[0] ? S.lyricLines[0].text : null);
-    if (line && relTime < S.hookDur) {
-      ctx.font = "800 " + Math.floor(W * 0.062) + "px Inter, system-ui, sans-serif";
-      ctx.fillStyle = "#fff";
-      const words = line.split(" "); const out = []; let cur = "";
-      for (const w of words) { const t2 = cur ? cur + " " + w : w; if (ctx.measureText(t2).width > W * 0.86 && cur) { out.push(cur); cur = w; } else cur = t2; }
-      out.push(cur);
-      out.forEach((l, i) => {
-        ctx.shadowColor = "rgba(0,0,0,0.8)"; ctx.shadowBlur = 14 * sc;
-        ctx.fillText(l, cx, H * 0.78 + i * W * 0.085);
-        ctx.shadowBlur = 0;
-      });
-    }
-    // écran de fin : call-to-action
+    ctx.shadowBlur = 0;
+
+    // écran de fin
     if (relTime >= S.hookDur) {
-      ctx.fillStyle = "rgba(0,0,0,0.55)"; ctx.fillRect(0, H * 0.42, W, H * 0.2);
-      ctx.fillStyle = "#fff"; ctx.font = "800 " + Math.floor(W * 0.07) + "px Inter, system-ui, sans-serif";
-      ctx.fillText("🎧 Écoute le morceau complet", cx, H * 0.50);
-      ctx.font = "500 " + Math.floor(W * 0.045) + "px Inter, system-ui, sans-serif";
-      ctx.fillStyle = "rgba(255,255,255,0.8)";
-      ctx.fillText("lien en bio / Spotify", cx, H * 0.56);
+      ctx.fillStyle = "rgba(0,0,0,0.6)"; ctx.fillRect(0, H * 0.40, W, H * 0.24);
+      ctx.fillStyle = "#fff"; ctx.font = "800 " + Math.floor(W * 0.068) + "px Inter, system-ui, sans-serif";
+      ctx.fillText("🎧 Écoute le morceau complet", cx, H * 0.49);
+      ctx.font = "500 " + Math.floor(W * 0.042) + "px Inter, system-ui, sans-serif";
+      ctx.fillStyle = "rgba(255,255,255,0.85)";
+      ctx.fillText($("spotifyLink").value ? "lien en description 🎵" : "lien en bio 🎵", cx, H * 0.555);
     }
-    // barre de progression discrète
+
+    // barre de progression
     if (relTime >= 0 && relTime < S.hookDur) {
-      ctx.fillStyle = "rgba(255,255,255,0.2)"; ctx.fillRect(W * 0.08, H * 0.93, W * 0.84, 4 * sc);
-      ctx.fillStyle = "#fff"; ctx.fillRect(W * 0.08, H * 0.93, W * 0.84 * Math.min(1, relTime / S.hookDur), 4 * sc);
+      ctx.fillStyle = "rgba(255,255,255,0.2)"; ctx.fillRect(W * 0.08, H * 0.94, W * 0.84, 3 * sc);
+      ctx.fillStyle = "#fff"; ctx.fillRect(W * 0.08, H * 0.94, W * 0.84 * Math.min(1, relTime / S.hookDur), 3 * sc);
     }
   }
 }
-function renderFrame(relTime) { renderTo(pctx, preview.width, preview.height, relTime, S.mode === "canvas", coverPreview); }
+function renderFrame(relTime) { renderTo(pctx, preview.width, preview.height, relTime, S.mode === "canvas", null); }
 
-/* boucle d'animation */
 let playing = false;
 (function loop() {
   requestAnimationFrame(loop);
@@ -604,7 +647,7 @@ let playing = false;
 function stopPlayback() {
   playing = false;
   if (S.audioEl) S.audioEl.pause();
-  $("playBtn").textContent = "▶️ Prévisualiser l'extrait";
+  $("playBtn").textContent = "▶️ Prévisualiser";
 }
 $("playBtn").addEventListener("click", async () => {
   if (!S.audioEl) return;
@@ -617,16 +660,18 @@ $("playBtn").addEventListener("click", async () => {
 });
 $("mode").addEventListener("change", e => { S.mode = e.target.value; renderFrame(-1); });
 
-/* ============ 5. EXPORT VIDÉO (MP4 si supporté, sinon WebM) ============ */
+/* ============ 5. EXPORT ============ */
 $("exportBtn").addEventListener("click", async () => {
   if (S.recording || !S.audioEl) return;
   const isCanvasMode = S.mode === "canvas";
-  const duration = isCanvasMode ? 8 : S.hookDur + 1.2; // +1,2 s pour l'écran de fin
-  // rendu en pleine résolution 1080×1920
+  const duration = isCanvasMode ? 8 : S.hookDur + 1.2;
   const rc = document.createElement("canvas"); rc.width = 1080; rc.height = 1920;
   const rctx2 = rc.getContext("2d");
-  const bigCover = document.createElement("canvas"); bigCover.width = bigCover.height = 800;
-  drawCover(bigCover.getContext("2d"), 800, S.coverSeed);
+  const bigScenes = S.scenes.map(s => {
+    const c = document.createElement("canvas"); c.width = c.height = 800;
+    c.getContext("2d").drawImage(s, 0, 0, 800, 800);
+    return c;
+  });
 
   const stream = rc.captureStream(30);
   S.recDest.stream.getAudioTracks().forEach(t => stream.addTrack(t));
@@ -641,13 +686,13 @@ $("exportBtn").addEventListener("click", async () => {
     a.download = ($("songTitle").value || "short") + (isCanvasMode ? "-spotify-canvas" : "-short") + (mime === "video/mp4" ? ".mp4" : ".webm");
     a.click();
     S.recording = false;
-    setStatus($("renderStatus"), "✔ Vidéo exportée (" + Math.round(blob.size / 1e6) + " Mo). Si fichier .webm : TikTok et YouTube l'acceptent tel quel.", "ok");
+    setStatus($("renderStatus"), "✔ Vidéo exportée (" + Math.round(blob.size / 1e6) + " Mo).", "ok");
     $("exportBtn").disabled = false;
   };
 
   S.recording = true;
   $("exportBtn").disabled = true;
-  setStatus($("renderStatus"), "⏺ Rendu en cours… " + Math.round(duration) + " s (laisse cet onglet ouvert et visible).", "warn");
+  setStatus($("renderStatus"), "⏺ Rendu… " + Math.round(duration) + " s (garde l'onglet ouvert).", "warn");
 
   await S.actx.resume();
   S.audioEl.currentTime = S.hookStart;
@@ -659,25 +704,23 @@ $("exportBtn").addEventListener("click", async () => {
     if (!S.recording) return;
     const rel = (performance.now() - t0) / 1000;
     if (rel >= duration) { S.audioEl.pause(); rec.stop(); return; }
-    renderTo(rctx2, rc.width, rc.height, rel, isCanvasMode, bigCover);
+    renderTo(rctx2, rc.width, rc.height, rel, isCanvasMode, bigScenes);
     requestAnimationFrame(drawExport);
   })();
 });
 
-/* ============ 6. KIT DE PUBLICATION ============ */
+/* ============ 6. KIT ============ */
 function buildKit() {
   const title = $("songTitle").value || "Mon morceau";
   const artistVal = $("artist").value;
   const link = $("spotifyLink").value;
-  const hookLine = (S.lyricLines && S.lyricLines[0]) ? S.lyricLines[0].text : "";
-  const shortTitle = (hookLine ? "« " + hookLine.slice(0, 40) + " » " : "") + "🎵 " + title + (artistVal ? " — " + artistVal : "");
+  const shortTitle = "🎵 " + title + (artistVal ? " — " + artistVal : "");
   const desc = "🎧 " + title + (artistVal ? " — " + artistVal : "") + "\n\n" +
-    (hookLine ? "« " + hookLine + " »\n\n" : "") +
     (link ? "Écoute le morceau complet ici 👉 " + link + "\n\n" : "Lien en bio 🔗\n\n") +
     "#musique #nouveauté #music #shorts #fyp #pourtoi #musiquenouvelle #playlist #chanson #sonoriginal #trending";
   $("kit").innerHTML =
-    "<label>Titre du short (copier-coller)</label><div class='kit' id='kitTitle'></div><button class='ghost' data-copy='kitTitle'>📋 Copier le titre</button>" +
-    "<label>Description + hashtags</label><div class='kit' id='kitDesc'></div><button class='ghost' data-copy='kitDesc'>📋 Copier la description</button>";
+    "<label>Titre du short</label><div class='kit' id='kitTitle'></div><button class='ghost' data-copy='kitTitle'>📋 Copier</button>" +
+    "<label>Description + hashtags</label><div class='kit' id='kitDesc'></div><button class='ghost' data-copy='kitDesc'>📋 Copier</button>";
   $("kitTitle").textContent = shortTitle;
   $("kitDesc").textContent = desc;
   document.querySelectorAll("[data-copy]").forEach(b => b.addEventListener("click", () => {
@@ -686,7 +729,6 @@ function buildKit() {
   }));
 }
 
-/* ============ PRÊT ============ */
 function updateReady() {
   const ok = !!S.audioEl && S.duration > 0 && $("songTitle").value.trim().length > 0;
   $("playBtn").disabled = !ok;
