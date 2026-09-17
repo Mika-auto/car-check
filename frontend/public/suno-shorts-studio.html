@@ -1,3 +1,4 @@
+
 <!doctype html>
 <html lang="fr">
 <head>
@@ -268,6 +269,7 @@ function setHook(start, dur) {
   $("hookDur").value = Math.floor(S.hookDur);
 }
 function setupHookUI() {
+  if (setupHookUI.done) return; setupHookUI.done = true;
   const hs = $("hookStart"), hd = $("hookDur");
   hs.max = Math.max(0, Math.floor(S.duration - 10));
   hd.max = Math.min(40, Math.floor(S.duration));
@@ -432,7 +434,6 @@ function drawCover(ctx, size, seed) {
 
   // TITRE
   ctx.textAlign = "center"; ctx.textBaseline = "middle";
-  const title = ($("songTitle").value || "").trim();
   if (title) {
     const words = title.split(/\s+/);
     const maxW = size * 0.82; const lines = []; let cur = "";
