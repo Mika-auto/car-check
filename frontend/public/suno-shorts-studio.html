@@ -1,0 +1,629 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Suno Shorts Studio</title>
+<style>
+  :root { font-family: Inter, system-ui, sans-serif; color: #e7ecf3; background: #0b0e14; }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 24px; }
+  h1 { font-size: 26px; margin: 0 0 4px; }
+  .sub { color: #8b95a7; margin: 0 0 24px; font-size: 14px; }
+  .grid { display: grid; grid-template-columns: 1fr 420px; gap: 24px; align-items: start; }
+  @media (max-width: 980px) { .grid { grid-template-columns: 1fr; } }
+  .card { background: #121722; border: 1px solid #232b3b; border-radius: 14px; padding: 20px; margin-bottom: 20px; }
+  .card h2 { font-size: 15px; margin: 0 0 14px; color: #9fb2d9; text-transform: uppercase; letter-spacing: 0.06em; }
+  label { display: block; font-size: 13px; color: #8b95a7; margin: 12px 0 4px; }
+  input[type=text], textarea { width: 100%; background: #0b0e14; border: 1px solid #2a344a; border-radius: 8px; color: #e7ecf3; padding: 10px; font-size: 14px; font-family: inherit; }
+  textarea { min-height: 130px; resize: vertical; }
+  .drop { border: 2px dashed #2a344a; border-radius: 12px; padding: 28px; text-align: center; color: #8b95a7; cursor: pointer; transition: border-color .15s; }
+  .drop.over { border-color: #5b8cff; color: #cdd8f2; }
+  .drop.has { border-style: solid; border-color: #2f6b4f; color: #bfe8d2; }
+  button { background: #2d4ea8; color: #fff; border: 0; border-radius: 8px; padding: 10px 18px; font-size: 14px; font-weight: 600; cursor: pointer; margin: 4px 6px 0 0; }
+  button:hover { background: #3a61c9; }
+  button.ghost { background: #1c2434; color: #c3cde0; }
+  button:disabled { opacity: .45; cursor: not-allowed; }
+  .pill { display: inline-block; background: #0b0e14; border: 1px solid #2a344a; border-radius: 20px; padding: 4px 12px; font-size: 12px; color: #9fb2d9; margin: 2px 4px 2px 0; }
+  #previewWrap { position: relative; width: 270px; aspect-ratio: 9/16; border-radius: 12px; overflow: hidden; background: #000; margin: 0 auto; }
+  #preview { width: 100%; height: 100%; display: block; }
+  .status { font-size: 13px; color: #8b95a7; margin-top: 10px; min-height: 18px; }
+  .ok { color: #7dd8a5; } .warn { color: #e8b96b; } .err { color: #ef7d7d; }
+  .kit { font-size: 13px; background: #0b0e14; border: 1px solid #2a344a; border-radius: 8px; padding: 10px; margin: 8px 0; white-space: pre-wrap; word-break: break-word; }
+  .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+  canvas.coverPreview { width: 150px; height: 150px; border-radius: 10px; }
+  .stepnum { color: #5b8cff; font-weight: 700; margin-right: 6px; }
+  select { background: #0b0e14; border: 1px solid #2a344a; border-radius: 8px; color: #e7ecf3; padding: 8px; font-size: 14px; }
+</style>
+</head>
+<body>
+<h1>🎬 Suno Shorts Studio</h1>
+<p class="sub">Dépose un morceau + colle tes paroles Suno → pochette, sous-titres, vidéo verticale et kit de publication générés automatiquement. 100% gratuit, tout se passe dans ton navigateur.</p>
+
+<div class="grid">
+  <div>
+    <div class="card">
+      <h2><span class="stepnum">1</span>Morceau</h2>
+      <div id="drop" class="drop">Dépose ton fichier MP3 / WAV ici<br><small>ou clique pour choisir</small></div>
+      <input type="file" id="file" accept="audio/*" hidden>
+      <div class="status" id="fileStatus">Aucun fichier chargé.</div>
+    </div>
+
+    <div class="card">
+      <h2><span class="stepnum">2</span>Infos du morceau</h2>
+      <label>Titre du morceau *</label>
+      <input type="text" id="songTitle" placeholder="Ex : Nuit Électrique">
+      <label>Nom d'artiste</label>
+      <input type="text" id="artist" placeholder="Ton nom d'artiste">
+      <label>Paroles (copier-coller direct depuis Suno, tags [Verse]/[Chorus] acceptés)</label>
+      <textarea id="lyrics" placeholder="[Verse]&#10;Colle ici tes paroles...&#10;&#10;[Chorus]&#10;Les tags seront ignorés automatiquement"></textarea>
+      <label>Lien Spotify du morceau (optionnel, pour la description)</label>
+      <input type="text" id="spotifyLink" placeholder="https://open.spotify.com/track/...">
+    </div>
+
+    <div class="card">
+      <h2><span class="stepnum">3</span>Pochette générée</h2>
+      <div class="row">
+        <canvas id="coverPreview" class="coverPreview" width="300" height="300"></canvas>
+        <div>
+          <p style="font-size:13px;color:#8b95a7;max-width:230px;margin:0 0 8px">Générée à partir du thème des paroles et du titre. Re-génère pour une variante.</p>
+          <button class="ghost" id="regenCover">🎲 Variante</button>
+          <button class="ghost" id="dlCover">⬇️ PNG 3000×3000</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2><span class="stepnum">4</span>Kit de publication</h2>
+      <div id="kit"></div>
+    </div>
+  </div>
+
+  <div>
+    <div class="card">
+      <h2>Aperçu vidéo 9:16</h2>
+      <div id="previewWrap"><canvas id="preview" width="540" height="960"></canvas></div>
+      <div class="row" style="margin-top:12px; justify-content:center">
+        <button id="playBtn" disabled>▶️ Prévisualiser l'extrait</button>
+      </div>
+      <div class="row" style="margin-top:8px; justify-content:center">
+        <select id="mode">
+          <option value="short">Short TikTok / YouTube (~30 s, avec paroles)</option>
+          <option value="canvas">Spotify Canvas (8 s, sans texte)</option>
+        </select>
+      </div>
+      <div class="row" style="margin-top:12px; justify-content:center">
+        <button id="exportBtn" disabled>⬇️ Exporter la vidéo</button>
+      </div>
+      <div class="status" id="renderStatus"></div>
+    </div>
+    <div class="card">
+      <h2>Analyse du morceau</h2>
+      <div id="analysis" class="status">En attente d'un fichier audio…</div>
+    </div>
+  </div>
+</div>
+
+<script>
+"use strict";
+/* ============ ÉTAT GLOBAL ============ */
+const S = {
+  buffer: null, audioEl: null, actx: null, analyser: null,
+  srcNode: null, recDest: null,
+  energy: [], duration: 0,
+  hookStart: 0, hookDur: 30, bpm: 0,
+  lyricLines: [], coverSeed: undefined,
+  mode: "short", recording: false,
+};
+
+const $ = id => document.getElementById(id);
+const drop = $("drop"), fileInput = $("file");
+const preview = $("preview"), pctx = preview.getContext("2d");
+
+/* ============ UTILITAIRES ============ */
+function hashStr(str) { let h = 2166136261; for (let i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; }
+function mulberry32(a) { return function() { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+function setStatus(el, msg, cls) { el.textContent = msg; el.className = "status " + (cls || ""); }
+function fmtTime(s) { return Math.floor(s / 60) + ":" + String(Math.floor(s % 60)).padStart(2, "0"); }
+
+/* ============ 1. CHARGEMENT AUDIO ============ */
+drop.addEventListener("click", () => fileInput.click());
+drop.addEventListener("dragover", e => { e.preventDefault(); drop.classList.add("over"); });
+drop.addEventListener("dragleave", () => drop.classList.remove("over"));
+drop.addEventListener("drop", e => { e.preventDefault(); drop.classList.remove("over"); if (e.dataTransfer.files[0]) loadAudio(e.dataTransfer.files[0]); });
+fileInput.addEventListener("change", () => { if (fileInput.files[0]) loadAudio(fileInput.files[0]); });
+
+async function loadAudio(file) {
+  try {
+    setStatus($("fileStatus"), "Décodage de « " + file.name + " »…");
+    const buf = await file.arrayBuffer();
+    S.actx = S.actx || new (window.AudioContext || window.webkitAudioContext)();
+    S.buffer = await S.actx.decodeAudioData(buf);
+    S.duration = S.buffer.duration;
+
+    if (S.audioEl) S.audioEl.remove();
+    S.audioEl = new Audio(URL.createObjectURL(file));
+    S.audioEl.crossOrigin = "anonymous";
+
+    if (S.srcNode) { try { S.actx.close(); } catch (e) {} S.actx = new (window.AudioContext || window.webkitAudioContext)(); }
+    S.srcNode = S.actx.createMediaElementSource(S.audioEl);
+    S.analyser = S.actx.createAnalyser();
+    S.analyser.fftSize = 256;
+    S.srcNode.connect(S.analyser);
+    S.analyser.connect(S.actx.destination);
+    S.recDest = S.actx.createMediaStreamDestination();
+    S.analyser.connect(S.recDest);
+
+    drop.classList.add("has");
+    drop.innerHTML = "🎵 " + file.name + "<br><small>" + fmtTime(S.duration) + " — clique pour remplacer</small>";
+    analyzeAudio();
+    setStatus($("fileStatus"), "Morceau chargé et analysé ✔", "ok");
+    updateReady();
+  } catch (err) {
+    setStatus($("fileStatus"), "Impossible de décoder ce fichier : " + err.message, "err");
+  }
+}
+
+/* ============ ANALYSE : ÉNERGIE + HOOK + BPM ============ */
+function analyzeAudio() {
+  const data = S.buffer.getChannelData(0);
+  const sr = S.buffer.sampleRate;
+  const win = Math.floor(sr * 0.1);
+  S.energy = [];
+  for (let i = 0; i + win <= data.length; i += win) {
+    let sum = 0;
+    for (let j = 0; j < win; j += 4) { const v = data[i + j]; sum += v * v; }
+    S.energy.push(Math.sqrt(sum / (win / 4)));
+  }
+  const sm = S.energy.map((v, i) => {
+    let s = 0, n = 0;
+    for (let k = Math.max(0, i - 5); k <= Math.min(S.energy.length - 1, i + 5); k++) { s += S.energy[k]; n++; }
+    return s / n;
+  });
+  S.energy = sm;
+
+  if (S.duration > 35) {
+    S.hookDur = 30;
+    const winN = Math.min(300, S.energy.length);
+    let best = 0, bestSum = -1;
+    let acc = S.energy.slice(0, winN).reduce((a, b) => a + b, 0);
+    for (let start = 0; start + winN <= S.energy.length; start++) {
+      if (acc > bestSum) { bestSum = acc; best = start; }
+      acc += S.energy[start + winN] - S.energy[start];
+    }
+    let s = best;
+    for (let k = best; k > Math.max(30, best - 80); k--) { if (S.energy[k] < S.energy[s]) s = k; }
+    S.hookStart = s * 0.1;
+  } else {
+    S.hookStart = 0; S.hookDur = S.duration;
+  }
+  if (S.hookStart + S.hookDur > S.duration) S.hookStart = Math.max(0, S.duration - S.hookDur);
+
+  const onsets = S.energy.map((v, i) => i === 0 ? 0 : Math.max(0, v - S.energy[i - 1]));
+  let bestBpm = 0, bestScore = -1;
+  for (let bpmCand = 60; bpmCand <= 180; bpmCand++) {
+    const lag = Math.round(60 / bpmCand / 0.1);
+    let sc = 0;
+    for (let i = lag; i < onsets.length; i++) sc += onsets[i] * onsets[i - lag];
+    if (sc > bestScore) { bestScore = sc; bestBpm = bpmCand; }
+  }
+  S.bpm = bestBpm;
+
+  $("analysis").innerHTML =
+    '<span class="pill">⏱ ' + fmtTime(S.duration) + "</span>" +
+    '<span class="pill"> BPM ≈ ' + S.bpm + "</span>" +
+    '<span class="pill"> 🔥 Extrait : ' + fmtTime(S.hookStart) + " → " + fmtTime(S.hookStart + S.hookDur) + "</span>" +
+    '<div class="status">Le passage le plus fort du morceau est sélectionné automatiquement.</div>';
+  scheduleLyrics();
+  buildKit();
+}
+
+/* ============ 2. PAROLES → SOUS-TITRES ============ */
+function parseLyrics() {
+  return $("lyrics").value.split(/\r?\n/)
+    .map(l => l.replace(/\[.*?\]/g, "").trim())
+    .filter(l => l.length > 0);
+}
+function scheduleLyrics() {
+  const lines = parseLyrics();
+  if (!lines.length || !S.duration) { S.lyricLines = []; return; }
+  const totalWeight = lines.reduce((a, l) => a + l.length + 10, 0);
+  let t = 0;
+  S.lyricLines = lines.map(l => { const d = (l.length + 10) / totalWeight * S.hookDur; const o = { text: l, t0: t, t1: t + d }; t += d; return o; });
+}
+function lyricAt(time) {
+  for (const l of S.lyricLines) if (time >= l.t0 && time < l.t1) return l.text;
+  return null;
+}
+
+/* ============ 3. POCHETTE SÉMANTIQUE ============ */
+const STOPWORDS = new Set(("le la les un une des du de d l et ou mais donc or ni car ne pas plus moins très bien tout tous toute toutes ce cet cette ces mon ma mes ton ta tes son sa ses notre nos votre vos leur leurs qui que quoi dont où je tu il elle on nous vous ils elles me te se lui y en a à au aux avec sans sous sur pour par est suis es sommes êtes sont était être ai as avons avez ont avoir fait faire va vais vas vont aller c'est j'ai n'est qu'il s'il the a an and or but of to in on at for with without from is are was were be been being it its this that these those i you he she we they me him her them my your his our their as if so no not do does did done have has had will would can could should just like get got go going know think see seen say said what which who whom when where why how all any both each few more most other some such only own same than too very s t don now").split(" "));
+
+const THEMES = [
+  { name: "nuit",   hue: [220, 260], motif: "stars",  words: "nuit night dark noir étoile star lune moon sombre shadow midnight minuit rêve dream silence dormir sleep insomnia insomnie clair galaxy galaxie cosmos space espace nebula nébuleuse".split(" ") },
+  { name: "feu",    hue: [5, 45],   motif: "rays",   words: "feu fire flamme flame brûle burn burning chaud heat enfer hell rage fury colère sang blood red rouge explosion bang boom".split(" ") },
+  { name: "mer",    hue: [180, 215],motif: "waves",  words: "mer sea océan ocean vague wave eau water pluie rain noyer drown bleu blue profond deep rivière river plage beach marée tide tempête storm".split(" ") },
+  { name: "amour",  hue: [330, 360],motif: "hearts", words: "amour love aime aimer heart cœur reine queen chérie darling bébé baby kiss embrasse tendre doux passion désir forever toujours ensemble together".split(" ") },
+  { name: "ville",  hue: [255, 290],motif: "city",   words: "ville city rue street béton bitume néon neon lumière lights urbain urban métro taxi building gratte-ciel crowd foule monde world people".split(" ") },
+  { name: "nature", hue: [85, 145], motif: "leaves", words: "vert green arbre tree forêt forest feuille leaf nature vent wind ciel sky soleil sun printemps été summer fleur flower rose jardin garden herbe grass terre ground montagne mountain".split(" ") },
+  { name: "triste", hue: [200, 235],motif: "rain",   words: "triste sad larme tear pleure cry crying pleurs peine douleur pain perdu lost seul lonely solitude adieu goodbye partir leave mémoire memory souvenir regret vide empty".split(" ") },
+  { name: "or",     hue: [40, 60],  motif: "rays",   words: "or gold golden roi king couronne crown shine brille shining bright lumière light glory gloire diamant diamond winner victoire win legend légende étoile star".split(" ") },
+];
+
+function extractKeywords(lyrics, maxN) {
+  const freq = new Map();
+  (lyrics.toLowerCase().replace(/[^\p{L}\s'-]/gu, " ").split(/\s+/)).forEach(w => {
+    w = w.replace(/^[-']+|[-']+$/g, "");
+    if (w.length < 3 || STOPWORDS.has(w)) return;
+    freq.set(w, (freq.get(w) || 0) + 1);
+  });
+  return [...freq.entries()].sort((a, b) => b[1] - a[1]).slice(0, maxN || 5).map(e => e[0]);
+}
+
+function pickTheme(lyrics, seed) {
+  const lower = " " + lyrics.toLowerCase() + " ";
+  let best = null, bestHits = 0;
+  for (const th of THEMES) {
+    let hits = 0;
+    for (const w of th.words) { hits += lower.split(" " + w).length - 1; }
+    if (hits > bestHits) { bestHits = hits; best = th; }
+  }
+  if (best) return best;
+  return THEMES[seed % THEMES.length];
+}
+
+function drawCover(ctx, size, seed) {
+  const title = ($("songTitle").value || "").trim();
+  const lyrics = $("lyrics").value || "";
+  const baseSeed = seed === undefined ? hashStr(title + "|" + lyrics) : seed;
+  const rnd = mulberry32(baseSeed);
+  const theme = pickTheme(lyrics, baseSeed);
+  const keywords = extractKeywords(lyrics, 4);
+  const hue = theme.hue[0] + Math.floor(rnd() * (theme.hue[1] - theme.hue[0]));
+
+  const bg = ctx.createLinearGradient(0, 0, size * 0.3, size);
+  bg.addColorStop(0, "hsl(" + hue + ",55%," + (8 + rnd() * 8) + "%)");
+  bg.addColorStop(1, "hsl(" + ((hue + 25) % 360) + ",60%," + (16 + rnd() * 10) + "%)");
+  ctx.fillStyle = bg; ctx.fillRect(0, 0, size, size);
+
+  ctx.save();
+  if (theme.motif === "stars") {
+    for (let i = 0; i < 140; i++) {
+      const x = rnd() * size, y = rnd() * size, r = rnd() * size * 0.006 + size * 0.001;
+      ctx.globalAlpha = 0.25 + rnd() * 0.75;
+      ctx.fillStyle = rnd() < 0.2 ? "hsl(" + hue + ",80%,80%)" : "#fff";
+      ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
+    }
+    ctx.globalAlpha = 0.9; ctx.fillStyle = "hsl(" + hue + ",30%,92%)";
+    ctx.beginPath(); ctx.arc(size * (0.25 + rnd() * 0.5), size * (0.15 + rnd() * 0.2), size * 0.09, 0, Math.PI * 2); ctx.fill();
+    ctx.globalAlpha = 1; ctx.fillStyle = bg;
+    ctx.beginPath(); ctx.arc(size * 0.62, size * 0.24, size * 0.08, 0, Math.PI * 2); ctx.fill();
+  } else if (theme.motif === "rays") {
+    ctx.translate(size / 2, size * 0.55);
+    for (let i = 0; i < 18; i++) {
+      ctx.rotate(Math.PI * 2 / 18);
+      ctx.globalAlpha = 0.06 + rnd() * 0.14;
+      ctx.fillStyle = "hsl(" + ((hue + rnd() * 30) % 360) + ",90%," + (55 + rnd() * 25) + "%)";
+      ctx.beginPath(); ctx.moveTo(0, 0);
+      ctx.lineTo(size * 0.9, -size * (0.01 + rnd() * 0.06));
+      ctx.lineTo(size * 0.9, size * (0.01 + rnd() * 0.06));
+      ctx.closePath(); ctx.fill();
+    }
+  } else if (theme.motif === "waves") {
+    for (let l = 0; l < 7; l++) {
+      ctx.globalAlpha = 0.18 + l * 0.07;
+      ctx.strokeStyle = "hsl(" + ((hue + l * 6) % 360) + ",70%," + (45 + l * 5) + "%)";
+      ctx.lineWidth = size * (0.006 + rnd() * 0.01);
+      ctx.beginPath();
+      const y0 = size * (0.25 + l * 0.11);
+      for (let x = 0; x <= size; x += size / 60) {
+        const y = y0 + Math.sin(x / size * (4 + l) * Math.PI + l * 1.3 + rnd() * 0.2) * size * 0.035;
+        x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+    }
+  } else if (theme.motif === "hearts") {
+    for (let i = 0; i < 16; i++) {
+      ctx.globalAlpha = 0.08 + rnd() * 0.3;
+      const cx = rnd() * size, cy = rnd() * size, s = size * (0.02 + rnd() * 0.09);
+      ctx.fillStyle = "hsl(" + ((hue + rnd() * 25 - 12) % 360) + ",80%," + (55 + rnd() * 20) + "%)";
+      ctx.beginPath();
+      ctx.moveTo(cx, cy + s * 0.3);
+      ctx.bezierCurveTo(cx - s, cy - s * 0.5, cx - s * 0.4, cy - s * 1.1, cx, cy - s * 0.4);
+      ctx.bezierCurveTo(cx + s * 0.4, cy - s * 1.1, cx + s, cy - s * 0.5, cx, cy + s * 0.3);
+      ctx.fill();
+    }
+  } else if (theme.motif === "city") {
+    ctx.globalAlpha = 1;
+    let x = 0;
+    while (x < size) {
+      const w = size * (0.05 + rnd() * 0.12), h = size * (0.15 + rnd() * 0.4);
+      ctx.fillStyle = "hsl(" + hue + ",40%," + (10 + rnd() * 12) + "%)";
+      ctx.fillRect(x, size - h, w, h);
+      ctx.fillStyle = "hsl(" + ((hue + 150) % 360) + ",90%,70%)";
+      for (let wy = size - h + size * 0.03; wy < size - size * 0.02; wy += size * 0.045)
+        for (let wx = x + size * 0.012; wx < x + w - size * 0.015; wx += size * 0.038)
+          if (rnd() < 0.4) ctx.fillRect(wx, wy, size * 0.012, size * 0.02);
+      x += w + size * 0.012;
+    }
+  } else if (theme.motif === "leaves") {
+    for (let i = 0; i < 26; i++) {
+      ctx.globalAlpha = 0.1 + rnd() * 0.35;
+      const cx = rnd() * size, cy = rnd() * size, s = size * (0.03 + rnd() * 0.1);
+      ctx.fillStyle = "hsl(" + ((hue + rnd() * 50 - 25 + 360) % 360) + ",60%," + (30 + rnd() * 35) + "%)";
+      ctx.save(); ctx.translate(cx, cy); ctx.rotate(rnd() * Math.PI * 2);
+      ctx.beginPath(); ctx.ellipse(0, 0, s, s * 0.35, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.restore();
+    }
+  } else if (theme.motif === "rain") {
+    for (let i = 0; i < 90; i++) {
+      ctx.globalAlpha = 0.15 + rnd() * 0.4;
+      ctx.strokeStyle = "hsl(" + hue + ",60%," + (60 + rnd() * 25) + "%)";
+      ctx.lineWidth = size * 0.003;
+      const x = rnd() * size, y = rnd() * size, len = size * (0.03 + rnd() * 0.07);
+      ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x - len * 0.25, y + len); ctx.stroke();
+    }
+    ctx.globalAlpha = 0.85; ctx.fillStyle = "hsl(" + hue + ",30%,15%)";
+    ctx.beginPath(); ctx.ellipse(size / 2, size * 0.88, size * 0.16, size * 0.05, 0, 0, Math.PI * 2); ctx.fill();
+  }
+  ctx.restore();
+
+  const g = ctx.createRadialGradient(size / 2, size * 0.48, 0, size / 2, size * 0.48, size * 0.55);
+  g.addColorStop(0, "rgba(0,0,0,0.45)"); g.addColorStop(0.7, "rgba(0,0,0,0.15)"); g.addColorStop(1, "rgba(0,0,0,0)");
+  ctx.fillStyle = g; ctx.fillRect(0, 0, size, size);
+
+  if (keywords.length) {
+    ctx.textAlign = "center";
+    keywords.forEach(kw => {
+      ctx.save();
+      ctx.globalAlpha = 0.10 + rnd() * 0.12;
+      ctx.translate(size * (0.15 + rnd() * 0.7), size * (0.15 + rnd() * 0.55));
+      ctx.rotate((rnd() - 0.5) * 0.9);
+      ctx.font = "800 italic " + Math.floor(size * (0.07 + rnd() * 0.08)) + "px Inter, system-ui, sans-serif";
+      ctx.fillStyle = "#fff";
+      ctx.fillText(kw, 0, 0);
+      ctx.restore();
+    });
+  }
+
+  ctx.textAlign = "center"; ctx.textBaseline = "middle";
+  if (title) {
+    const words = title.split(/\s+/);
+    const maxW = size * 0.82; const lines = []; let cur = "";
+    ctx.font = "900 " + Math.floor(size * 0.085) + "px Inter, system-ui, sans-serif";
+    for (const w of words) {
+      const t = cur ? cur + " " + w : w;
+      if (ctx.measureText(t).width > maxW && cur) { lines.push(cur); cur = w; } else cur = t;
+    }
+    lines.push(cur);
+    const fs = lines.length >= 3 ? size * 0.072 : lines.length === 2 ? size * 0.085 : size * 0.1;
+    ctx.font = "900 " + Math.floor(fs) + "px Inter, system-ui, sans-serif";
+    lines.forEach((l, i) => {
+      const y = size * 0.47 + (i - (lines.length - 1) / 2) * fs * 1.15;
+      ctx.shadowColor = "rgba(0,0,0,0.7)"; ctx.shadowBlur = size * 0.03;
+      ctx.fillStyle = "#fff";
+      ctx.fillText(l.toUpperCase(), size / 2, y);
+      ctx.shadowBlur = 0;
+    });
+    ctx.fillStyle = "hsl(" + ((hue + 40) % 360) + ",90%,65%)";
+    ctx.fillRect(size * 0.35, size * 0.47 + (lines.length / 2) * fs * 1.15 + size * 0.02, size * 0.3, size * 0.012);
+  }
+  const artist = ($("artist").value || "").trim();
+  if (artist) {
+    ctx.font = "600 " + Math.floor(size * 0.028) + "px Inter, system-ui, sans-serif";
+    ctx.fillStyle = "rgba(255,255,255,0.75)";
+    ctx.fillText(artist.toUpperCase(), size / 2, size * 0.075);
+  }
+  ctx.font = "500 " + Math.floor(size * 0.02) + "px Inter, system-ui, sans-serif";
+  ctx.fillStyle = "rgba(255,255,255,0.55)";
+  ctx.fillText("ambiance : " + theme.name, size / 2, size * 0.955);
+}
+
+const coverPreview = $("coverPreview"), cctx = coverPreview.getContext("2d");
+function renderCover() { drawCover(cctx, 300, S.coverSeed); renderFrame(-1); }
+
+$("songTitle").addEventListener("input", () => { S.coverSeed = undefined; scheduleLyrics(); renderCover(); buildKit(); updateReady(); });
+$("lyrics").addEventListener("input", () => { scheduleLyrics(); renderCover(); buildKit(); });
+$("artist").addEventListener("input", buildKit);
+$("spotifyLink").addEventListener("input", buildKit);
+$("regenCover").addEventListener("click", () => {
+  S.coverSeed = (S.coverSeed === undefined ? (Math.random() * 1e9) | 0 : S.coverSeed) + 7;
+  renderCover();
+});
+$("dlCover").addEventListener("click", () => {
+  const c = document.createElement("canvas"); c.width = c.height = 3000;
+  drawCover(c.getContext("2d"), 3000, S.coverSeed);
+  const a = document.createElement("a");
+  a.href = c.toDataURL("image/png"); a.download = ($("songTitle").value || "pochette") + "-3000x3000.png"; a.click();
+});
+
+/* ============ 4. RENDU VIDÉO ============ */
+let particles = [];
+function initParticles() { particles = Array.from({ length: 60 }, () => ({ x: Math.random(), y: Math.random(), vx: (Math.random() - .5) * .004, vy: (Math.random() - .5) * .004, r: Math.random() * .8 + .2 })); }
+initParticles();
+
+const freqData = new Uint8Array(128);
+function bands() {
+  if (!S.analyser) return { bass: 0.4, mid: 0.3, treb: 0.2 };
+  S.analyser.getByteFrequencyData(freqData);
+  let b = 0, m = 0, t = 0;
+  for (let i = 0; i < 8; i++) b += freqData[i];
+  for (let i = 8; i < 32; i++) m += freqData[i];
+  for (let i = 32; i < 96; i++) t += freqData[i];
+  return { bass: b / 8 / 255, mid: m / 24 / 255, treb: t / 64 / 255 };
+}
+
+function renderTo(ctx, W, H, relTime, isCanvasMode, coverSrc) {
+  const band = relTime >= 0 ? bands() : { bass: 0.4, mid: 0.3, treb: 0.2 };
+  const sc = W / 540;
+  ctx.save();
+  const zoom = 1.15 + band.bass * 0.12;
+  const bs = Math.max(W, H) * zoom;
+  ctx.translate(W / 2, H / 2);
+  ctx.filter = "saturate(1.3) brightness(0.55)";
+  ctx.drawImage(coverSrc, -bs / 2, -bs / 2, bs, bs);
+  ctx.filter = "none"; ctx.restore();
+  const vg = ctx.createRadialGradient(W / 2, H / 2, H * 0.2, W / 2, H / 2, H * 0.75);
+  vg.addColorStop(0, "rgba(0,0,0,0.1)"); vg.addColorStop(1, "rgba(0,0,0,0.65)");
+  ctx.fillStyle = vg; ctx.fillRect(0, 0, W, H);
+  for (const p of particles) {
+    p.x += p.vx * (1 + band.treb * 6); p.y += p.vy * (1 + band.mid * 4);
+    if (p.x < -0.05) p.x = 1.05; if (p.x > 1.05) p.x = -0.05;
+    if (p.y < -0.05) p.y = 1.05; if (p.y > 1.05) p.y = -0.05;
+    ctx.beginPath();
+    ctx.fillStyle = "rgba(255,255,255," + (0.15 + band.bass * 0.5) + ")";
+    ctx.arc(p.x * W, p.y * H, p.r * (2 + band.bass * 10) * sc, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  const cx = W / 2, cy = H * 0.46, baseR = W * 0.30;
+  for (let a = 0; a < 64; a++) {
+    const ang = (a / 64) * Math.PI * 2;
+    const amp = (a < 16 ? band.bass : a < 40 ? band.mid : band.treb);
+    const r = baseR + amp * W * 0.16 * Math.sin(a * 0.9 + relTime * 3);
+    ctx.fillStyle = "rgba(255,255,255," + (0.35 + amp * 0.6) + ")";
+    ctx.beginPath(); ctx.arc(cx + Math.cos(ang) * r, cy + Math.sin(ang) * r, (2.5 + amp * 4) * sc, 0, Math.PI * 2); ctx.fill();
+  }
+
+  if (!isCanvasMode) {
+    const title = $("songTitle").value || "Titre du morceau";
+    const artist = $("artist").value;
+    ctx.textAlign = "center";
+    ctx.fillStyle = "rgba(255,255,255,0.95)";
+    ctx.font = "700 " + Math.floor(W * 0.075) + "px Inter, system-ui, sans-serif";
+    ctx.fillText(title, cx, H * 0.115);
+    if (artist) {
+      ctx.font = "400 " + Math.floor(W * 0.045) + "px Inter, system-ui, sans-serif";
+      ctx.fillStyle = "rgba(255,255,255,0.7)";
+      ctx.fillText(artist, cx, H * 0.155);
+    }
+    const line = relTime >= 0 ? lyricAt(Math.min(relTime, S.hookDur - 0.05)) : (S.lyricLines[0] ? S.lyricLines[0].text : null);
+    if (line && relTime < S.hookDur) {
+      ctx.font = "800 " + Math.floor(W * 0.062) + "px Inter, system-ui, sans-serif";
+      ctx.fillStyle = "#fff";
+      const words = line.split(" "); const out = []; let cur = "";
+      for (const w of words) { const t2 = cur ? cur + " " + w : w; if (ctx.measureText(t2).width > W * 0.86 && cur) { out.push(cur); cur = w; } else cur = t2; }
+      out.push(cur);
+      out.forEach((l, i) => {
+        ctx.shadowColor = "rgba(0,0,0,0.8)"; ctx.shadowBlur = 14 * sc;
+        ctx.fillText(l, cx, H * 0.78 + i * W * 0.085);
+        ctx.shadowBlur = 0;
+      });
+    }
+    if (relTime >= S.hookDur) {
+      ctx.fillStyle = "rgba(0,0,0,0.55)"; ctx.fillRect(0, H * 0.42, W, H * 0.2);
+      ctx.fillStyle = "#fff"; ctx.font = "800 " + Math.floor(W * 0.07) + "px Inter, system-ui, sans-serif";
+      ctx.fillText("🎧 Écoute le morceau complet", cx, H * 0.50);
+      ctx.font = "500 " + Math.floor(W * 0.045) + "px Inter, system-ui, sans-serif";
+      ctx.fillStyle = "rgba(255,255,255,0.8)";
+      ctx.fillText("lien en bio / Spotify", cx, H * 0.56);
+    }
+    if (relTime >= 0 && relTime < S.hookDur) {
+      ctx.fillStyle = "rgba(255,255,255,0.2)"; ctx.fillRect(W * 0.08, H * 0.93, W * 0.84, 4 * sc);
+      ctx.fillStyle = "#fff"; ctx.fillRect(W * 0.08, H * 0.93, W * 0.84 * Math.min(1, relTime / S.hookDur), 4 * sc);
+    }
+  }
+}
+function renderFrame(relTime) { renderTo(pctx, preview.width, preview.height, relTime, S.mode === "canvas", coverPreview); }
+
+let playing = false;
+(function loop() {
+  requestAnimationFrame(loop);
+  const rel = S.audioEl && playing ? S.audioEl.currentTime - S.hookStart : -1;
+  renderFrame(rel);
+  if (playing && S.audioEl && S.audioEl.currentTime >= S.hookStart + S.hookDur) stopPlayback();
+})();
+
+function stopPlayback() {
+  playing = false;
+  if (S.audioEl) S.audioEl.pause();
+  $("playBtn").textContent = "▶️ Prévisualiser l'extrait";
+}
+$("playBtn").addEventListener("click", async () => {
+  if (!S.audioEl) return;
+  if (playing) { stopPlayback(); return; }
+  await S.actx.resume();
+  S.audioEl.currentTime = S.hookStart;
+  await S.audioEl.play();
+  playing = true;
+  $("playBtn").textContent = "⏸ Stop";
+});
+$("mode").addEventListener("change", e => { S.mode = e.target.value; renderFrame(-1); });
+
+/* ============ 5. EXPORT VIDÉO ============ */
+$("exportBtn").addEventListener("click", async () => {
+  if (S.recording || !S.audioEl) return;
+  const isCanvasMode = S.mode === "canvas";
+  const duration = isCanvasMode ? 8 : S.hookDur + 1.2;
+  const rc = document.createElement("canvas"); rc.width = 1080; rc.height = 1920;
+  const rctx2 = rc.getContext("2d");
+  const bigCover = document.createElement("canvas"); bigCover.width = bigCover.height = 800;
+  drawCover(bigCover.getContext("2d"), 800, S.coverSeed);
+
+  const stream = rc.captureStream(30);
+  S.recDest.stream.getAudioTracks().forEach(t => stream.addTrack(t));
+  const mime = MediaRecorder.isTypeSupported("video/mp4") ? "video/mp4" : "video/webm";
+  const rec = new MediaRecorder(stream, { mimeType: mime, videoBitsPerSecond: 8000000, audioBitsPerSecond: 192000 });
+  const chunks = [];
+  rec.ondataavailable = e => { if (e.data.size) chunks.push(e.data); };
+  rec.onstop = () => {
+    const blob = new Blob(chunks, { type: mime });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = ($("songTitle").value || "short") + (isCanvasMode ? "-spotify-canvas" : "-short") + (mime === "video/mp4" ? ".mp4" : ".webm");
+    a.click();
+    S.recording = false;
+    setStatus($("renderStatus"), "✔ Vidéo exportée (" + Math.round(blob.size / 1e6) + " Mo). Si fichier .webm : TikTok et YouTube l'acceptent tel quel.", "ok");
+    $("exportBtn").disabled = false;
+  };
+
+  S.recording = true;
+  $("exportBtn").disabled = true;
+  setStatus($("renderStatus"), "⏺ Rendu en cours… " + Math.round(duration) + " s (laisse cet onglet ouvert et visible).", "warn");
+
+  await S.actx.resume();
+  S.audioEl.currentTime = S.hookStart;
+  await S.audioEl.play();
+  rec.start(200);
+
+  const t0 = performance.now();
+  (function drawExport() {
+    if (!S.recording) return;
+    const rel = (performance.now() - t0) / 1000;
+    if (rel >= duration) { S.audioEl.pause(); rec.stop(); return; }
+    renderTo(rctx2, rc.width, rc.height, rel, isCanvasMode, bigCover);
+    requestAnimationFrame(drawExport);
+  })();
+});
+
+/* ============ 6. KIT DE PUBLICATION ============ */
+function buildKit() {
+  const title = $("songTitle").value || "Mon morceau";
+  const artistVal = $("artist").value;
+  const link = $("spotifyLink").value;
+  const hookLine = (S.lyricLines && S.lyricLines[0]) ? S.lyricLines[0].text : "";
+  const shortTitle = (hookLine ? "« " + hookLine.slice(0, 40) + " » " : "") + "🎵 " + title + (artistVal ? " — " + artistVal : "");
+  const desc = "🎧 " + title + (artistVal ? " — " + artistVal : "") + "\n\n" +
+    (hookLine ? "« " + hookLine + " »\n\n" : "") +
+    (link ? "Écoute le morceau complet ici 👉 " + link + "\n\n" : "Lien en bio 🔗\n\n") +
+    "#musique #nouveauté #music #shorts #fyp #pourtoi #musiquenouvelle #playlist #chanson #sonoriginal #trending";
+  $("kit").innerHTML =
+    "<label>Titre du short (copier-coller)</label><div class='kit' id='kitTitle'></div><button class='ghost' data-copy='kitTitle'>📋 Copier le titre</button>" +
+    "<label>Description + hashtags</label><div class='kit' id='kitDesc'></div><button class='ghost' data-copy='kitDesc'>📋 Copier la description</button>";
+  $("kitTitle").textContent = shortTitle;
+  $("kitDesc").textContent = desc;
+  document.querySelectorAll("[data-copy]").forEach(b => b.addEventListener("click", () => {
+    navigator.clipboard.writeText($(b.dataset.copy).textContent);
+    b.textContent = "✔ Copié"; setTimeout(() => b.textContent = "📋 Copier", 1200);
+  }));
+}
+
+/* ============ PRÊT ============ */
+function updateReady() {
+  const ok = !!S.buffer && $("songTitle").value.trim().length > 0;
+  $("playBtn").disabled = !ok;
+  $("exportBtn").disabled = !ok;
+}
+renderCover(); buildKit();
+</script>
+</body>
+</html>
