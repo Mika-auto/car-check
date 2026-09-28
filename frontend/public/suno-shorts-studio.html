@@ -1,4 +1,3 @@
-
 <!doctype html>
 <html lang="fr">
 <head>
@@ -40,7 +39,7 @@
 </head>
 <body>
 <h1>🎬 Suno Shorts Studio</h1>
-<p class="sub">Dépose un morceau → pochette, vidéo verticale et kit de publication générés automatiquement. 100% gratuit, tout dans ton navigateur.</p>
+<p class="sub">Dépose un morceau → pochette, vidéo verticale (ton personnage peut danser dessus !) et kit de publication générés automatiquement. 100% gratuit, tout dans ton navigateur.</p>
 
 <div class="grid">
   <div>
@@ -89,7 +88,33 @@
     </div>
 
     <div class="card">
-      <h2><span class="stepnum">4</span>Passage utilisé</h2>
+      <h2><span class="stepnum">4</span>Personnage qui danse (optionnel)</h2>
+      <div class="drop" id="dancerDrop">Dépose l'image de ton personnage<br><small>PNG transparent conseillé — ou clique pour choisir</small></div>
+      <input type="file" id="dancerFile" accept="image/*" hidden>
+      <div class="status" id="dancerStatus">Sans personnage, la vidéo reste audio-réactive (spectre).</div>
+      <div id="dancerOpts" style="display:none">
+        <label>Style de danse</label>
+        <select id="danceStyle">
+          <option value="bounce">🐸 Bounce — saut sur chaque temps</option>
+          <option value="sway">🌴 Sway — balancement fluide</option>
+          <option value="twist">🌀 Twist — rotation du corps</option>
+          <option value="party">🎉 Party — mélange des trois</option>
+        </select>
+        <label>Intensité du mouvement : <span id="danceAmpLabel">60</span>%</label>
+        <input type="range" id="danceAmp" min="20" max="100" value="60">
+        <label>Taille du personnage : <span id="danceSizeLabel">55</span>%</label>
+        <input type="range" id="danceSize" min="25" max="90" value="55">
+        <label>Position au sol (verticale) : <span id="danceYLabel">72</span>%</label>
+        <input type="range" id="danceY" min="40" max="92" value="72">
+        <label>Suppression auto du fond : <span id="bgTolLabel">inactif</span></label>
+        <input type="range" id="bgTol" min="0" max="120" value="0">
+        <div class="hint">Image à fond uni (blanc, vert…) ? Monte la tolérance pour retirer le fond automatiquement. PNG déjà transparent : laisse à 0.</div>
+        <div class="row"><button class="ghost" id="dancerRemove">🗑 Retirer le personnage</button></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2><span class="stepnum">5</span>Passage utilisé</h2>
       <label>Début de l'extrait : <span id="hookStartLabel">auto</span></label>
       <input type="range" id="hookStart" min="0" max="100" value="0" step="1" disabled>
       <label>Durée (secondes)</label>
@@ -101,7 +126,7 @@
     </div>
 
     <div class="card">
-      <h2><span class="stepnum">5</span>Kit de publication</h2>
+      <h2><span class="stepnum">6</span>Kit de publication</h2>
       <div id="kit"></div>
     </div>
   </div>
@@ -139,6 +164,7 @@ const S = {
   coverSeed: undefined, customImage: null,
   scenes: [],            // canvases de scènes pour la vidéo
   mode: "short", recording: false,
+  dancer: { img: null, canvas: null, style: "bounce", amp: 60, size: 55, y: 72, bgTol: 0 },
 };
 
 const $ = id => document.getElementById(id);
@@ -516,6 +542,200 @@ $("customImg").addEventListener("change", e => {
   img.src = URL.createObjectURL(f);
 });
 
+/* ============ 3bis. PERSONNAGE DANSANT ============ */
+const dancerDrop = $("dancerDrop"), dancerFile = $("dancerFile");
+dancerDrop.addEventListener("click", () => dancerFile.click());
+dancerDrop.addEventListener("dragover", e => { e.preventDefault(); dancerDrop.classList.add("over"); });
+dancerDrop.addEventListener("dragleave", () => dancerDrop.classList.remove("over"));
+dancerDrop.addEventListener("drop", e => { e.preventDefault(); dancerDrop.classList.remove("over"); if (e.dataTransfer.files[0]) loadDancer(e.dataTransfer.files[0]); });
+dancerFile.addEventListener("change", () => { if (dancerFile.files[0]) loadDancer(dancerFile.files[0]); });
+
+function loadDancer(file) {
+  if (!file.type.startsWith("image/")) { setStatus($("dancerStatus"), "Ce fichier n'est pas une image.", "err"); return; }
+  const img = new Image();
+  img.onload = () => {
+    S.dancer.img = img;
+    processDancer();
+    dancerDrop.classList.add("has");
+    dancerDrop.innerHTML = "🧍 " + file.name + "<br><small>clique pour remplacer</small>";
+    $("dancerOpts").style.display = "block";
+    setStatus($("dancerStatus"), "Personnage chargé ✔ — choisis son style de danse.", "ok");
+  };
+  img.onerror = () => setStatus($("dancerStatus"), "Image illisible.", "err");
+  img.src = URL.createObjectURL(file);
+}
+
+function processDancer() {
+  const d = S.dancer; if (!d.img) return;
+  d.canvas = null;
+  let iw = d.img.naturalWidth, ih = d.img.naturalHeight;
+  const k = Math.min(1, 1200 / Math.max(iw, ih));
+  iw = Math.max(1, Math.round(iw * k)); ih = Math.max(1, Math.round(ih * k));
+  const c = document.createElement("canvas"); c.width = iw; c.height = ih;
+  const x = c.getContext("2d");
+  x.drawImage(d.img, 0, 0, iw, ih);
+
+  if (d.bgTol > 0) {
+    // suppression du fond : couleurs des 4 coins retirées dans un rayon de tolérance
+    const id = x.getImageData(0, 0, iw, ih), data = id.data;
+    const corners = [[0, 0], [iw - 1, 0], [0, ih - 1], [iw - 1, ih - 1]].map(p => {
+      const i = (p[1] * iw + p[0]) * 4; return [data[i], data[i + 1], data[i + 2]];
+    });
+    const tol = d.bgTol * 3.6;
+    let removed = 0;
+    for (let i = 0; i < data.length; i += 4) {
+      if (data[i + 3] === 0) continue;
+      for (let ci = 0; ci < 4; ci++) {
+        const cc = corners[ci];
+        const dr = data[i] - cc[0], dg = data[i + 1] - cc[1], db = data[i + 2] - cc[2];
+        if (dr * dr + dg * dg + db * db <= tol * tol) { data[i + 3] = 0; removed++; break; }
+      }
+    }
+    x.putImageData(id, 0, 0);
+    if (removed < iw * ih * 0.005) setStatus($("dancerStatus"), "Fond quasi inchangé — augmente la tolérance, ou fournis un PNG transparent.", "warn");
+    else setStatus($("dancerStatus"), "Fond retiré automatiquement ✔", "ok");
+  }
+
+  // recadrage sur le contenu visible (utile pour PNG à marges transparentes)
+  const id2 = x.getImageData(0, 0, iw, ih), dd = id2.data;
+  let minX = iw, minY = ih, maxX = -1, maxY = -1;
+  for (let py = 0; py < ih; py++) {
+    for (let px = 0; px < iw; px++) {
+      if (dd[(py * iw + px) * 4 + 3] > 12) {
+        if (px < minX) minX = px; if (px > maxX) maxX = px;
+        if (py < minY) minY = py; if (py > maxY) maxY = py;
+      }
+    }
+  }
+  if (maxX >= 0) {
+    const cw = maxX - minX + 1, ch = maxY - minY + 1;
+    const c2 = document.createElement("canvas"); c2.width = cw; c2.height = ch;
+    c2.getContext("2d").drawImage(c, minX, minY, cw, ch, 0, 0, cw, ch);
+    d.canvas = c2;
+  } else if (d.bgTol > 0) {
+    setStatus($("dancerStatus"), "Trop de pixels supprimés — baisse la tolérance.", "err");
+  }
+  renderFrame(-1);
+}
+
+function dancerPose(t) {
+  const d = S.dancer;
+  const bpm = S.bpm >= 60 ? S.bpm : 120;
+  const beat = t * bpm / 60;
+  const phase = beat - Math.floor(beat);
+  const beatNum = Math.floor(beat);
+  const amp = d.amp / 100;
+  let style = d.style;
+  if (style === "party") style = ["bounce", "sway", "twist"][Math.floor(beat / 8) % 3];
+  const b = Math.abs(Math.sin(Math.PI * phase)); // 0 au sol, 1 en plein saut
+  let dx = 0, dy = 0, rot = 0, sx = 1, sy = 1;
+  if (style === "bounce") {
+    dy = -b * 0.07 * amp;                       // saut à chaque temps
+    sy = 1 + 0.10 * b * amp;                    // étirement en l'air
+    sx = 1 - 0.07 * b * amp;                    // évasement léger
+    rot = (beatNum % 2 === 0 ? 1 : -1) * 0.12 * b * amp; // penche alternativement
+  } else if (style === "sway") {
+    const w = Math.sin(beat * Math.PI / 2);     // un balancement sur 2 temps
+    dx = w * 0.045 * amp;
+    rot = w * 0.15 * amp;
+    dy = -b * 0.015 * amp;
+    sx = 1 + 0.02 * Math.abs(w) * amp;
+    sy = 1 - 0.03 * Math.abs(w) * amp;
+  } else {                                      // twist
+    const w = Math.sin(beat * Math.PI);
+    rot = w * 0.22 * amp;
+    sx = 1 - 0.12 * Math.abs(w) * amp;
+    sy = 1 + 0.03 * Math.abs(w) * amp;
+    dy = -b * 0.02 * amp;
+  }
+  return { style, phase, beatNum, dx, dy, rot, sx, sy, amp };
+}
+
+function drawDancer(ctx, W, H, t, band, sc, relTime) {
+  const d = S.dancer; if (!d.canvas) return;
+  const tt = relTime >= 0 ? t : 0;              // aperçu hors lecture : pose debout
+  const dw = W * d.size / 100;
+  const dh = dw * d.canvas.height / d.canvas.width;
+  const feetY = H * d.y / 100;
+  const midY = feetY - dh * 0.45;
+
+  // halo sombre pour détacher le personnage du fond
+  const hal = ctx.createRadialGradient(W / 2, midY, 0, W / 2, midY, dw);
+  hal.addColorStop(0, "rgba(0,0,0,0.4)"); hal.addColorStop(1, "rgba(0,0,0,0)");
+  ctx.fillStyle = hal; ctx.fillRect(0, 0, W, H);
+
+  // ombre au sol (rétrécit quand le personnage est en l'air)
+  const pose0 = dancerPose(tt);
+  const air = Math.max(0, -pose0.dy);
+  ctx.fillStyle = "rgba(0,0,0,0.35)";
+  ctx.beginPath();
+  ctx.ellipse(W / 2 + pose0.dx * W, feetY + 3 * sc, dw * 0.42 * (1 - air * 6), dw * 0.09 * (1 - air * 6), 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  function drawAt(pose, alpha) {
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.translate(W / 2 + pose.dx * W, feetY + pose.dy * H); // pivot aux pieds
+    ctx.rotate(pose.rot);
+    ctx.scale(pose.sx, pose.sy);
+    ctx.drawImage(d.canvas, -dw / 2, -dh, dw, dh);
+    ctx.restore();
+  }
+
+  // traînée de mouvement (sensation de vitesse, style mème)
+  if (tt > 0.2) {
+    drawAt(dancerPose(Math.max(0, tt - 0.07)), 0.10);
+    drawAt(dancerPose(Math.max(0, tt - 0.14)), 0.22);
+  }
+
+  // personnage principal + coup de basse (punch)
+  const punch = 1 + (relTime >= 0 ? band.bass : 0.3) * 0.05 * pose0.amp;
+  drawAt({ ...pose0, sx: pose0.sx * punch, sy: pose0.sy * punch }, 1);
+
+  if (relTime >= 0) {
+    // onde de choc au sol sur chaque temps
+    if (pose0.phase < 0.45) {
+      const rr = pose0.phase / 0.45;
+      const strength = 0.10 + band.bass * 0.45;
+      ctx.strokeStyle = "rgba(255,255,255," + (strength * (1 - rr)).toFixed(3) + ")";
+      ctx.lineWidth = 2.5 * sc;
+      ctx.beginPath();
+      ctx.ellipse(W / 2, feetY + 3 * sc, dw * (0.25 + rr * 0.55), dw * (0.06 + rr * 0.13), 0, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+    // étincelles sur les aigus
+    if (band.treb > 0.30) {
+      const k = Math.min(1, (band.treb - 0.30) * 2.2);
+      for (let i = 0; i < 10; i++) {
+        const ang = i / 10 * Math.PI * 2 + pose0.beatNum * 0.9;
+        const r = dw * (0.55 + ((i * 37) % 11) / 11 * 0.6) * (0.7 + 0.3 * Math.sin(pose0.phase * Math.PI * 2 + i));
+        const px = W / 2 + Math.cos(ang) * r, py = midY + Math.sin(ang) * r * 0.8;
+        ctx.fillStyle = "rgba(255,255,255," + (k * 0.7).toFixed(2) + ")";
+        const s2 = (1.5 + k * 2.5) * sc;
+        ctx.fillRect(px - s2 / 2, py - s2 / 2, s2, s2);
+      }
+    }
+  }
+}
+
+$("danceStyle").addEventListener("change", e => { S.dancer.style = e.target.value; renderFrame(-1); });
+$("danceAmp").addEventListener("input", e => { S.dancer.amp = +e.target.value; $("danceAmpLabel").textContent = e.target.value; renderFrame(-1); });
+$("danceSize").addEventListener("input", e => { S.dancer.size = +e.target.value; $("danceSizeLabel").textContent = e.target.value; renderFrame(-1); });
+$("danceY").addEventListener("input", e => { S.dancer.y = +e.target.value; $("danceYLabel").textContent = e.target.value; renderFrame(-1); });
+$("bgTol").addEventListener("input", e => {
+  S.dancer.bgTol = +e.target.value;
+  $("bgTolLabel").textContent = e.target.value === "0" ? "inactif" : e.target.value;
+  processDancer();
+});
+$("dancerRemove").addEventListener("click", () => {
+  S.dancer.img = null; S.dancer.canvas = null;
+  dancerDrop.classList.remove("has");
+  dancerDrop.innerHTML = "Dépose l'image de ton personnage<br><small>PNG transparent conseillé — ou clique pour choisir</small>";
+  $("dancerOpts").style.display = "none";
+  setStatus($("dancerStatus"), "Personnage retiré — la vidéo redevient audio-réactive.", "");
+  renderFrame(-1);
+});
+
 /* ============ 4. RENDU VIDÉO ============ */
 const freqData = new Uint8Array(128);
 function bands() {
@@ -575,8 +795,12 @@ function renderTo(ctx, W, H, relTime, isCanvasMode, sceneImgs) {
   vg.addColorStop(0, "rgba(0,0,0,0.05)"); vg.addColorStop(1, "rgba(0,0,0,0.72)");
   ctx.fillStyle = vg; ctx.fillRect(0, 0, W, H);
 
-  // spectre circulaire
-  const cx = W / 2, cy = H * 0.44, baseR = W * 0.30;
+  // personnage qui danse OU spectre circulaire
+  const cx = W / 2;
+  if (S.dancer.canvas) {
+    drawDancer(ctx, W, H, t, band, sc, relTime);
+  } else {
+  const cy = H * 0.44, baseR = W * 0.30;
   const bars = 56, rot = t * 0.15;
   for (let i = 0; i < bars; i++) {
     const ang = (i / bars) * Math.PI * 2 + rot;
@@ -598,6 +822,7 @@ function renderTo(ctx, W, H, relTime, isCanvasMode, sceneImgs) {
   ctx.fillStyle = "rgba(255,255,255," + (0.04 + band.bass * 0.08) + ")";
   ctx.arc(cx, cy, baseR - W * 0.02, 0, Math.PI * 2);
   ctx.fill();
+  }
 
   if (!isCanvasMode) {
     const title = $("songTitle").value || "Titre du morceau";
