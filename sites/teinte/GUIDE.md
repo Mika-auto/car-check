@@ -45,7 +45,8 @@ Aucune compilation n'est nécessaire, et il n'y a aucune dépendance en dehors d
   **Règle de lisibilité** : éviter les polices à empattements filiformes (Didot, Bodoni) pour les titres. Préférer une police à traits épais : une grotesque large ou une serif robuste.
 
 ### `hero` : première impression
-- `word` : le mot dessiné en grains de couleur. 4 à 8 lettres en majuscules donnent le meilleur rendu.
+- `word` : le mot de l'accueil. 4 à 8 lettres en majuscules donnent le meilleur rendu. À l'ouverture, il part d'un tas de grains, chaque lettre se forme puis se « lie » en couleur pleine. Passer la souris sur une lettre la réduit en grains, puis elle se reforme. À adapter à l'histoire du client : du grain de café à la tasse, du fil au tissu, de la farine au pain.
+- `letterColors` : la couleur pleine de chaque lettre, une par lettre. Les mêmes couleurs sont reprises dans le grand mot du pied de page.
 - `kicker` : 3 courtes mentions au-dessus du mot.
 - `title` : la promesse principale. On peut mettre un mot en valeur avec `<mark>mot</mark>`.
 - `text`, `ctas` (boutons : `label`, `href` vers une page ou une section, `style` `accent` ou `ghost`), `hint`.

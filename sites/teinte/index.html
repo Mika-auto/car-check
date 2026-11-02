@@ -31,6 +31,7 @@
 body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--f-ui);font-size:17px;line-height:1.55;-webkit-font-smoothing:antialiased;overflow-x:hidden}
 body.lock{overflow:hidden}
 img{max-width:100%;display:block}
+img[data-powder]:not([src]){visibility:hidden}
 a{color:inherit}
 button{font:inherit;color:inherit}
 :focus-visible{outline:3px solid var(--accent);outline-offset:3px;border-radius:4px}
@@ -100,8 +101,8 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 .hero{padding-block:clamp(20px,3vw,36px) clamp(40px,6vw,80px);overflow:hidden}
 .hero-top{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px 24px;color:var(--muted)}
 .wordmark{position:relative;margin-block:clamp(10px,2vw,24px)}
-.wordmark canvas{display:block;width:100%;touch-action:pan-y;cursor:crosshair}
-.wordmark .hint{margin-top:10px;justify-content:flex-end;color:var(--muted);font-size:.85rem;display:flex;align-items:center;gap:8px}
+.wordmark canvas{display:block;width:100%;aspect-ratio:5/1;touch-action:pan-y;cursor:crosshair}
+.wordmark .hint{margin:12px 0 0;justify-content:flex-end;color:var(--muted);font-size:.85rem;display:flex;align-items:center;gap:8px}
 .wordmark .hint::before{content:"";width:28px;height:1.5px;background:currentColor}
 .hero-grid{display:grid;gap:32px;margin-top:clamp(20px,3vw,40px)}
 @media (min-width:980px){.hero-grid{grid-template-columns:1.25fr .9fr .75fr;align-items:end}}
@@ -407,7 +408,8 @@ const SITE = {
     title: 'Des couleurs qui sortent de la <mark>terre</mark>, pas d\'un tube.',
     text: 'Nous extrayons, lavons et broyons à la main des ocres, des terres et des minéraux pour les peintres, les restaurateurs et les architectes.',
     ctas: [{label:'Composer une couleur', href:'#nuancier', style:'accent'}, {label:'Voir les pigments', href:'#pigments', style:'ghost'}],
-    hint: 'Passez la main sur le mot',
+    hint: 'Une poudre plus un liant donnent une peinture. Passez la souris sur une lettre pour la rebroyer.',
+    letterColors: ['#A8452B','#E2B65A','#4E3426','#8E3B22','#C46A2E','#D59A2A'],
     particleColors: ['#E2B65A','#D59A2A','#C9922E','#C46A2E','#A8452B','#8E3B22','#6B5A3E','#4E3426']
   },
   manifesto: {
@@ -577,40 +579,51 @@ function nameColor(hex){
   return `${base}${tone} n° ${String(hash(hex) % 9000 + 1000)}`;
 }
 
-/* ---------- powder "photographs" generated in canvas ---------- */
+/* ---------- powder "photographs" generated in canvas (lazy, fast) ---------- */
 const powderCache = new Map();
-function powder(hex, mode='mound', w=560, h=420, seed=1, hex2){
+let noiseTile = null;
+function getNoise(){ if (noiseTile) return noiseTile; const c = document.createElement('canvas'); c.width = c.height = 128; const x = c.getContext('2d'), id = x.createImageData(128,128), r = rng(11);
+  for (let i=0;i<id.data.length;i+=4){ const v = r()*255; id.data[i]=id.data[i+1]=id.data[i+2]=v; id.data[i+3]=40; } x.putImageData(id,0,0); return noiseTile = c; }
+function variants(hex, n=10, from=-.32, to=.22){ return Array.from({length:n}, (_,k) => shade(hex, from + (to-from)*k/(n-1))); }
+function powder(hex, mode='mound', w=480, h=360, seed=1, hex2){
   const key = [hex,mode,w,h,seed,hex2].join('|'); if (powderCache.has(key)) return powderCache.get(key);
   const c = document.createElement('canvas'); c.width = w; c.height = h; const x = c.getContext('2d'); const r = rng(hash(key));
-  const ground = SITE.theme.paper2;
+  const V = variants(hex), V2 = hex2 ? variants(hex2) : V, nV = V.length;
   if (mode === 'flat'){
     const g = x.createLinearGradient(0,0,w,h); g.addColorStop(0, shade(hex,.12)); g.addColorStop(1, shade(hex2||hex,-.18)); x.fillStyle = g; x.fillRect(0,0,w,h);
-    for (let i=0;i<w*h/18;i++){ const v = (r()-.5)*.35; x.fillStyle = shade(r()<.5?hex:(hex2||hex), v); const s = r()*2.2+.4; x.fillRect(r()*w, r()*h, s, s); }
-    // soft light streak
+    const n = w*h/40;
+    for (let k=0;k<nV;k++){ x.fillStyle = (k%2 ? V2 : V)[k]; for (let i=0;i<n/nV;i++){ const s = r()*2.2+.4; x.fillRect(r()*w, r()*h, s, s); } }
     const lg = x.createRadialGradient(w*.3,h*.25,0,w*.3,h*.25,w*.7); lg.addColorStop(0,'rgba(255,255,255,.22)'); lg.addColorStop(1,'rgba(255,255,255,0)'); x.fillStyle = lg; x.fillRect(0,0,w,h);
   } else {
-    // table + light falloff
+    const ground = SITE.theme.paper2;
     const g = x.createLinearGradient(0,0,0,h); g.addColorStop(0, shade(ground,.35)); g.addColorStop(1, shade(ground,-.08)); x.fillStyle = g; x.fillRect(0,0,w,h);
     const cx = w*(.48 + (r()-.5)*.08), base = h*.8, mw = w*.36, mh = h*(.38 + r()*.12);
     const top = X => base - mh*Math.exp(-Math.pow((X-cx)/(mw*.62),2));
-    // shadow
     const sg = x.createRadialGradient(cx+mw*.25, base+6, 0, cx+mw*.25, base+6, mw*1.4); sg.addColorStop(0,'rgba(30,25,20,.35)'); sg.addColorStop(1,'rgba(30,25,20,0)'); x.fillStyle = sg; x.beginPath(); x.ellipse(cx+mw*.2, base+4, mw*1.4, h*.07, 0, 0, Math.PI*2); x.fill();
-    // mound body
-    x.beginPath(); x.moveTo(cx-mw*1.5, base); for (let X=cx-mw*1.5; X<=cx+mw*1.5; X+=3) x.lineTo(X, top(X) + (r()-.5)*1.5); x.lineTo(cx+mw*1.5, base);
-    x.quadraticCurveTo(cx, base + h*.05, cx-mw*1.5, base); x.closePath();
+    x.beginPath(); x.moveTo(cx-mw*1.5, base); for (let X=cx-mw*1.5; X<=cx+mw*1.5; X+=4) x.lineTo(X, top(X)); x.lineTo(cx+mw*1.5, base); x.quadraticCurveTo(cx, base + h*.05, cx-mw*1.5, base); x.closePath();
     const mg = x.createLinearGradient(cx-mw, base-mh, cx+mw, base); mg.addColorStop(0, shade(hex,.18)); mg.addColorStop(.5, hex); mg.addColorStop(1, shade(hex,-.32)); x.fillStyle = mg; x.fill();
     x.save(); x.clip();
-    for (let i=0;i<w*h/7;i++){ const X = cx + (r()-.5)*mw*3, Y = base - r()*mh*1.05; const lit = (cx - X)/(mw*3) + (base - Y)/(mh*3);
-      x.fillStyle = shade(hex, (r()-.5)*.28 + lit*.25); const s = r()*1.8+.5; x.fillRect(X, Y, s, s); }
+    // grains bucketed by shade: one fillStyle per bucket instead of one per grain
+    const n = w*h/14, buckets = Array.from({length:nV}, () => []);
+    for (let i=0;i<n;i++){ const X = cx + (r()-.5)*mw*3, Y = base - r()*mh*1.05; const lit = (cx - X)/(mw*3) + (base - Y)/(mh*3);
+      const k = clamp(Math.round((.55 + lit*.6 + (r()-.5)*.5)*(nV-1)), 0, nV-1); buckets[k].push(X, Y, r()*1.8+.5); }
+    buckets.forEach((b,k) => { x.fillStyle = V[k]; for (let j=0;j<b.length;j+=3) x.fillRect(b[j], b[j+1], b[j+2], b[j+2]); });
     x.restore();
-    // loose grains around
-    for (let i=0;i<900;i++){ const a = r()*Math.PI*2, d = mw*(1.1 + Math.pow(r(),2)*1.2); const X = cx + Math.cos(a)*d, Y = base + Math.sin(a)*d*.12; x.fillStyle = shade(hex,(r()-.5)*.3); x.globalAlpha = .4 + r()*.5; const s = r()*1.6+.4; x.fillRect(X,Y,s,s); }
+    x.globalAlpha = .7;
+    for (let k=0;k<nV;k++){ x.fillStyle = V[k]; for (let i=0;i<70;i++){ const a = r()*Math.PI*2, d = mw*(1.1 + Math.pow(r(),2)*1.2); const s = r()*1.6+.4; x.fillRect(cx + Math.cos(a)*d, base + Math.sin(a)*d*.12, s, s); } }
     x.globalAlpha = 1;
   }
-  // film grain
-  const id = x.getImageData(0,0,w,h), d = id.data; for (let i=0;i<d.length;i+=4){ const n = (r()-.5)*14; d[i]+=n; d[i+1]+=n; d[i+2]+=n; } x.putImageData(id,0,0);
-  const url = c.toDataURL('image/jpeg', .86); powderCache.set(key, url); return url;
+  x.globalCompositeOperation = 'overlay'; x.fillStyle = x.createPattern(getNoise(),'repeat'); x.fillRect(0,0,w,h); x.globalCompositeOperation = 'source-over';
+  const url = c.toDataURL('image/jpeg', .84); powderCache.set(key, url); return url;
 }
+// templates write data-powder="…"; images are generated when they come near the viewport
+const pw = (...a) => `data-powder="${a.map(v => v == null ? '' : v).join('|')}"`;
+function applyPowder(el){ if (el.dataset.powdered) return; const [hex,mode,w,h,seed,hex2] = el.dataset.powder.split('|'); const url = powder(hex, mode, +w, +h, +seed, hex2 || undefined);
+  if (el.tagName === 'IMG') el.src = url; else el.style.backgroundImage = `url(${url})`; el.dataset.powdered = 1; }
+const powderQ = []; let powderBusy = false;
+function pumpPowder(){ if (powderBusy) return; powderBusy = true; const run = () => { const t0 = performance.now(); while (powderQ.length && performance.now() - t0 < 10) applyPowder(powderQ.shift()); if (powderQ.length) requestAnimationFrame(run); else powderBusy = false; }; requestAnimationFrame(run); }
+const powderIO = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting){ powderIO.unobserve(e.target); powderQ.push(e.target); pumpPowder(); } }), {rootMargin:'500px 0px'});
+function hydrate(root=document, eager=false){ $$('[data-powder]:not([data-powdered])', root).forEach(el => eager ? applyPowder(el) : powderIO.observe(el)); }
 
 /* ---------- theme ---------- */
 const root = document.documentElement.style;
@@ -661,7 +674,7 @@ function renderFooter(){
       <div><h3>Visiter</h3><ul>${B.address.map(a=>`<li>${esc(a)}</li>`).join('')}<li>${esc(openState().text)}</li></ul></div>
       <div><h3>Écrire</h3><ul><li>${esc(B.email)}</li><li>${esc(B.phone)}</li></ul></div>
     </div>
-    <div class="giant" aria-hidden="true">${[...SITE.hero.word].map(l=>`<span>${esc(l)}</span>`).join('')}</div>
+    <div class="giant" aria-hidden="true">${[...SITE.hero.word].map((l,i)=>`<span style="color:${letterColors()[i % letterColors().length]}">${esc(l)}</span>`).join('')}</div>
     <div class="legal"><span>© ${new Date().getFullYear()} ${esc(B.legal)}</span><span>${esc(B.demoNotice)}</span></div></div>`;
   $$('.giant span').forEach((s,i) => s.addEventListener('pointerenter', () => { s.style.color = cols[(i + Math.floor(Math.random()*cols.length)) % cols.length]; }));
   $('#news').addEventListener('submit', e => { e.preventDefault(); const v = $('#newsMail').value.trim();
@@ -672,7 +685,7 @@ function renderFooter(){
 const views = $('#views');
 function section(id, html){ const s = document.createElement('section'); s.className = 'view'; s.dataset.view = id; s.hidden = true; s.innerHTML = html; views.append(s); return s; }
 function cardHTML(p){ return `<button class="pcard" type="button" data-pig="${p.id}">
-  <div class="img"><img alt="Poudre de ${esc(p.name)}" src="${powder(p.hex,'mound',560,420,1)}" loading="lazy"><span class="ci">${esc(p.ci)}</span></div>
+  <div class="img"><img alt="Poudre de ${esc(p.name)}" ${pw(p.hex,'mound',480,360,1)}><span class="ci">${esc(p.ci)}</span></div>
   <div class="row"><h3>${esc(p.name)}</h3><span class="price tnum">${money(p.price)}</span></div>
   <span class="sub">${esc(p.origin)} · ${esc(SITE.unit)}</span></button>`; }
 const dayPig = SITE.products[Math.floor(Date.now()/864e5) % SITE.products.length];
@@ -683,11 +696,11 @@ function renderHome(){
   section('accueil', `
   <div class="hero wrap">
     <div class="hero-top label">${H.kicker.map(k=>`<span>${esc(k)}</span>`).join('')}</div>
-    <div class="wordmark"><canvas id="heroCv" role="img" aria-label="${esc(B.name)}, mot composé de grains de pigment"></canvas><span class="hint">${esc(H.hint)}</span></div>
+    <div class="wordmark"><canvas id="heroCv" role="img" aria-label="${esc(B.name)}, mot composé de grains de pigment"></canvas><p class="hint">${esc(H.hint)}</p></div>
     <div class="hero-grid">
       <h1>${H.title}</h1>
       <div><p class="prose">${esc(H.text)}</p><div class="ctas">${H.ctas.map(c=>`<a class="btn ${c.style}" href="${c.href}">${esc(c.label)} <span class="arr">→</span></a>`).join('')}</div></div>
-      <button class="daycard" type="button" data-pig="${dayPig.id}"><img alt="" src="${powder(dayPig.hex,'mound',300,300,2)}"><span><span class="label">Pigment du jour</span><strong>${esc(dayPig.name)}</strong><span class="muted">${esc(dayPig.ci)} · ${esc(dayPig.origin)}</span></span></button>
+      <button class="daycard" type="button" data-pig="${dayPig.id}"><img alt="" ${pw(dayPig.hex,'mound',300,300,2)}><span><span class="label">Pigment du jour</span><strong>${esc(dayPig.name)}</strong><span class="muted">${esc(dayPig.ci)} · ${esc(dayPig.origin)}</span></span></button>
     </div>
   </div>
   <div class="manif"><div class="wrap"><span class="label">${esc(M.label)}</span><p class="big" id="manifText">${words}</p><div class="sig"><span class="dot" style="background:var(--accent);width:34px;height:34px"></span><span>${esc(M.signature)}</span></div></div></div>
@@ -700,7 +713,7 @@ function renderHome(){
         <div class="left"><div><span class="label">Geste ${i+1} sur ${PR.steps.length}</span><h3>${esc(s.verb)}</h3><p class="prose">${esc(s.text)}</p></div>
           <div><div class="num tnum">${esc(s.value)}<small>${esc(s.unit)}</small></div><div style="margin-top:8px;font-weight:600">${esc(s.fact)}</div>
           <div class="meta" style="margin-top:18px">${s.tags.map(t=>`<span>${esc(t)}</span>`).join('')}</div></div></div>
-        <div class="pic" style="background-image:url(${powder(s.colors[0], i%2 ? 'flat':'mound', 720, 540, i+10, s.colors[1])})" role="img" aria-label="${esc(s.verb)} : matière ${esc(s.fact)}"></div>
+        <div class="pic" ${pw(s.colors[0], i%2 ? 'flat':'mound', 640, 480, i+10, s.colors[1])} role="img" aria-label="${esc(s.verb)} : matière ${esc(s.fact)}"></div>
       </article>`).join('')}</div></div></div>
   <div class="mixer" id="${MX.id}"><div class="wrap"><div class="sec-head"><div><span class="label">${esc(MX.label)}</span><h2>${esc(MX.title)}</h2></div><p class="prose">${esc(MX.text)}</p></div>
     <div class="mix-grid">
@@ -731,6 +744,7 @@ function renderPigments(){
     if (pigSort==='prix') list.sort((a,b)=>a.price-b.price); else if (pigSort==='nom') list.sort((a,b)=>a.name.localeCompare(b.name,'fr')); else list.sort((a,b)=>SITE.families.indexOf(a.family)-SITE.families.indexOf(b.family));
     $('#pigGrid').innerHTML = list.length ? list.map(cardHTML).join('') : `<p class="empty">Aucun pigment ne correspond à « ${esc(pigQuery)} ». Essayez un nom de couleur, un indice comme PBr7 ou une région.</p>`;
     $('#pigCount').textContent = `${list.length} pigment${list.length>1?'s':''}`;
+    hydrate($('#pigGrid'));
   };
   $('#filters').addEventListener('click', e => { const b = e.target.closest('[data-fam]'); if(!b) return; pigFilter = b.dataset.fam; $$('#filters .chip').forEach(c=>c.setAttribute('aria-pressed', c===b)); draw(); });
   $('#pigQ').addEventListener('input', e => { pigQuery = e.target.value; draw(); });
@@ -748,14 +762,14 @@ function sessionsFor(w){
 function renderAtelier(){
   section('atelier', `<div class="wrap"><div class="phead"><div class="crumbs label">Ateliers</div><h1>Atelier</h1><p class="prose">Des stages en petit groupe, dans la carrière et dans l'atelier. Le matériel, les pigments et le repas du midi sont compris.</p></div>
     <div class="booking"><div class="ws-list" id="wsList">${SITE.workshops.map(w=>`
-      <button class="ws" type="button" data-ws="${w.id}" aria-pressed="false"><img alt="" src="${powder(w.hex,'flat',280,210,3,shade(w.hex,-.3))}">
+      <button class="ws" type="button" data-ws="${w.id}" aria-pressed="false"><img alt="" ${pw(w.hex,'flat',280,210,3,shade(w.hex,-.3))}>
         <div><h3>${esc(w.name)}</h3><p class="muted" style="margin-top:6px">${esc(w.text)}</p><div class="info"><span>${esc(w.duration)}</span><span>${esc(w.level)}</span><span>${w.capacity} places</span></div></div>
         <span class="price tnum">${money(w.price)}</span></button>`).join('')}</div>
       <div class="panel" id="panel" aria-live="polite"></div></div></div>`);
   $('#wsList').addEventListener('click', e => { const b = e.target.closest('[data-ws]'); if(!b) return; bk.ws = b.dataset.ws; bk.session = null; bk.step = 1; $$('#wsList .ws').forEach(x=>x.setAttribute('aria-pressed', x===b)); drawPanel(); if (innerWidth < 1080) $('#panel').scrollIntoView({behavior: reduce?'auto':'smooth', block:'start'}); });
   drawPanel();
 }
-function drawPanel(){
+function drawPanel(){ requestAnimationFrame(() => hydrate($('#panel')));
   const p = $('#panel'), w = SITE.workshops.find(x=>x.id===bk.ws);
   const nav = `<div class="steps-nav">${['Date','Participants','Coordonnées'].map((s,i)=>`<span class="${bk.step===i+1?'on':''}">${i+1}. ${s}</span>`).join('')}</div>`;
   if (!w){ p.innerHTML = `<h2 style="font-size:1.6rem;font-stretch:112%">Réserver un atelier</h2><p class="muted" style="margin-top:10px">Choisissez un atelier dans la liste pour voir les prochaines dates et les places restantes.</p>`; return; }
@@ -792,7 +806,7 @@ const cap = t => t.charAt(0).toUpperCase() + t.slice(1);
 const fmtDate = d => new Date(d).toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'});
 function renderJournal(){
   section('journal', `<div class="wrap"><div class="phead"><div class="crumbs label">Journal</div><h1>Journal</h1><p class="prose">Histoire des couleurs, chimie de l'atelier et conseils pratiques.</p></div>
-    <div class="jgrid">${SITE.journal.map((a,i)=>`<a class="jcard" href="#lire-${a.id}"><div class="img"><img alt="" src="${powder(a.hex, i===0?'mound':'flat', 900, 680, 7+i, a.hex2)}" loading="lazy"></div>
+    <div class="jgrid">${SITE.journal.map((a,i)=>`<a class="jcard" href="#lire-${a.id}"><div class="img"><img alt="" ${pw(a.hex, i===0?'mound':'flat', 760, 570, 7+i, a.hex2)}></div>
       <span class="label muted">${esc(a.kicker)} · ${fmtDate(a.date)} · ${esc(a.read)}</span><h3>${esc(a.title)}</h3><p>${esc(a.lead)}</p></a>`).join('')}</div></div>`);
   section('article', '');
 }
@@ -801,7 +815,7 @@ function renderArticle(id){
   const idx = SITE.journal.indexOf(a), next = SITE.journal[(idx+1)%SITE.journal.length];
   let first = true;
   v.innerHTML = `<article class="wrap article"><div class="phead" style="padding-bottom:0"><a class="crumbs label" href="#journal" style="display:inline-block;text-decoration:none">← Journal · ${esc(a.kicker)}</a><h1>${esc(a.title)}</h1><p class="lead">${esc(a.lead)}</p><p class="muted" style="margin-top:18px">${fmtDate(a.date)} · ${esc(a.read)} de lecture</p></div>
-    <div class="cover"><img alt="" src="${powder(a.hex,'flat',1400,600,21,a.hex2)}"></div>
+    <div class="cover"><img alt="" ${pw(a.hex,'flat',1200,520,21,a.hex2)}></div>
     <div class="body">${a.body.map(([t,txt])=>{ if (t==='p'){ const c = first ? ' class="first"' : ''; first = false; return `<p${c}>${esc(txt)}</p>`; } if (t==='q') return `<blockquote>${esc(txt)}</blockquote>`; return `<h2>${esc(txt)}</h2>`; }).join('')}
       <a class="jcard" href="#lire-${next.id}" style="margin-top:40px;border-top:1.5px solid var(--ink);padding-top:22px"><span class="label muted">Article suivant</span><h3>${esc(next.title)} →</h3></a></div></article>`;
 }
@@ -844,12 +858,13 @@ function drawCart(){
   const d = $('#cartDrawer'), ids = Object.keys(cart).filter(id=>cart[id]>0 && P(id));
   const sub = ids.reduce((s,id)=>s + P(id).price*cart[id], 0), free = SITE.shipping.free, ship = sub === 0 || sub >= free ? 0 : SITE.shipping.cost;
   d.innerHTML = `<div class="drawer-hd"><h2>Panier</h2><button class="x" type="button" data-close>Fermer</button></div>
-    <div class="drawer-body">${ids.length ? ids.map(id=>{ const p = P(id); return `<div class="line"><img alt="" src="${powder(p.hex,'mound',300,300,2)}"><div><b>${esc(p.name)}</b><div class="muted" style="font-size:.88rem">${esc(p.ci)} · ${esc(SITE.unit)}</div>
+    <div class="drawer-body">${ids.length ? ids.map(id=>{ const p = P(id); return `<div class="line"><img alt="" ${pw(p.hex,'mound',300,300,2)}><div><b>${esc(p.name)}</b><div class="muted" style="font-size:.88rem">${esc(p.ci)} · ${esc(SITE.unit)}</div>
       <div class="q"><button type="button" data-q="${id}" data-d="-1" aria-label="Retirer ${esc(SITE.unit)}">−</button><span class="tnum">${cart[id]}</span><button type="button" data-q="${id}" data-d="1" aria-label="Ajouter ${esc(SITE.unit)}">+</button><button class="rm" type="button" data-rm="${id}">Retirer</button></div></div><b class="tnum">${money(p.price*cart[id])}</b></div>`; }).join('')
       : `<p class="empty">Votre panier est vide.<br><a href="#pigments" data-close>Parcourir les pigments</a></p>`}</div>
     ${ids.length ? `<div class="drawer-ft"><div class="note">${sub >= free ? 'Livraison offerte.' : `Plus que ${money(free-sub)} pour la livraison offerte.`}</div><div class="ship"><i style="width:${clamp(sub/free*100,0,100)}%"></i></div>
       <div class="sum" style="border:0;padding:0"><div><span>Sous-total</span><span class="tnum">${money(sub)}</span></div><div><span>Livraison</span><span class="tnum">${ship ? money(ship) : 'Offerte'}</span></div><div class="tot"><span>Total</span><span class="tnum">${money(sub+ship)}</span></div></div>
       <button class="btn accent" type="button" id="checkout" style="justify-content:center">Valider la commande</button><p class="note" id="coNote"></p></div>` : ''}`;
+  hydrate(d, true);
   $$('[data-q]',d).forEach(b=>b.onclick=()=>{ const id=b.dataset.q; cart[id]=Math.max(0,cart[id]+ +b.dataset.d); if(!cart[id]) delete cart[id]; store.set('cart',cart); updateCartBadge(); drawCart(); });
   $$('[data-rm]',d).forEach(b=>b.onclick=()=>{ delete cart[b.dataset.rm]; store.set('cart',cart); updateCartBadge(); drawCart(); });
   const co = $('#checkout',d); if (co) co.onclick = () => { $('#coNote').textContent = B.demoNotice; };
@@ -857,11 +872,12 @@ function drawCart(){
 function drawPig(id){
   const p = P(id), d = $('#pigDrawer'); const stars = '●'.repeat(p.light) + '○'.repeat(3-p.light);
   d.innerHTML = `<div class="drawer-hd"><span class="label muted">${esc(p.family)}</span><button class="x" type="button" data-close>Fermer</button></div>
-    <div class="drawer-body pd"><div class="pd-img"><img alt="Poudre de ${esc(p.name)}" src="${powder(p.hex,'mound',800,600,5)}"></div>
+    <div class="drawer-body pd"><div class="pd-img"><img alt="Poudre de ${esc(p.name)}" ${pw(p.hex,'mound',720,540,5)}></div>
       <h3>${esc(p.name)}</h3><p class="prose" style="font-size:1.1rem">${esc(p.text)}</p>
       <dl class="specs"><div><dt>Colour Index</dt><dd>${esc(p.ci)}</dd></div><div><dt>Origine</dt><dd>${esc(p.origin)}</dd></div><div><dt>Opacité</dt><dd>${esc(p.opacity)}</dd></div><div><dt>Tenue à la lumière</dt><dd aria-label="${p.light} sur 3">${stars}</dd></div><div><dt>Code couleur</dt><dd class="tnum">${esc(p.hex)}</dd></div><div><dt>Conditionnement</dt><dd>${esc(SITE.unit)}</dd></div></dl></div>
     <div class="drawer-ft"><div style="display:flex;justify-content:space-between;align-items:baseline"><span class="muted">Prix pour ${esc(SITE.unit)}</span><b style="font-size:1.5rem" class="tnum">${money(p.price)}</b></div>
       <button class="btn accent" type="button" id="pdAdd" style="justify-content:center">Ajouter au panier</button><button class="btn ghost" type="button" id="pdMix" style="justify-content:center">Essayer dans le nuancier</button></div>`;
+  hydrate(d, true);
   $('#pdAdd').onclick = () => addToCart(id);
   $('#pdMix').onclick = () => { closeDrawers(); if (!mixSel.find(m=>m.id===id)){ if (mixSel.length>=3) mixSel.shift(); mixSel.push({id, w:40}); } syncMixer(); location.hash = '#' + SITE.mixer.id; };
 }
@@ -887,50 +903,63 @@ let toastT; function toast(m){ const t = $('#toast'); t.textContent = m; t.class
    3. INTERACTIONS VIVANTES
    ================================================================== */
 
-/* ---------- hero: wordmark made of pigment grains ---------- */
-const hero = {cv:null, x:null, parts:[], w:0, h:0, dpr:1, ptr:{x:-9999,y:-9999,active:false}, visible:true, t0:0, groups:[]};
+/* ---------- hero: powder + binder = paint ----------
+   The grains start as a heap of powder, rise into the letters, then each letter "binds" into solid paint.
+   Touching a letter grinds it back into powder; it re-forms and binds again. */
+const hero = {cv:null, x:null, parts:[], letters:[], w:0, h:0, dpr:1, ptr:{x:-9999,y:-9999,active:false}, visible:true, t0:0, font:'', base:0};
+function letterColors(){ const c = SITE.hero.letterColors; if (c && c.length) return c; const p = SITE.hero.particleColors; return [...SITE.hero.word].map((_,i) => p[(i*3 + 4) % p.length]); }
 function buildHero(){
   const cv = hero.cv = $('#heroCv'); if (!cv) return;
-  const w = cv.parentElement.clientWidth; const dpr = hero.dpr = Math.min(devicePixelRatio||1, 2);
-  const word = SITE.hero.word, fam = SITE.theme.fontUi;
+  const w = cv.parentElement.clientWidth; if (!w) return; const dpr = hero.dpr = Math.min(devicePixelRatio||1, 2);
+  const word = SITE.hero.word, chars = [...word], fam = SITE.theme.fontUi;
   const off = document.createElement('canvas').getContext('2d');
-  let fs = 200; const setF = s => { off.font = `900 expanded ${s}px "${fam}"`; if (!off.font.includes('expanded')) off.font = `900 ${s}px "${fam}"`; try { off.fontStretch = 'expanded'; } catch(e){} };
-  setF(fs); fs = fs * (w*.985) / off.measureText(word).width; setF(fs);
+  let fs = 200; const fontOf = s => `900 ${s}px "${fam}"`;
+  off.font = fontOf(fs); fs = fs * (w*.985) / off.measureText(word).width; off.font = fontOf(fs);
   const m = off.measureText(word); const asc = m.actualBoundingBoxAscent || fs*.72, desc = m.actualBoundingBoxDescent || 0;
-  const h = Math.ceil(asc + desc + fs*.08);
-  hero.w = w; hero.h = h; cv.style.height = h + 'px'; cv.width = w*dpr; cv.height = h*dpr;
-  const oc = off.canvas; oc.width = w; oc.height = h; setF(fs); off.fillStyle = '#000'; off.textBaseline = 'alphabetic';
-  const tw = off.measureText(word).width; off.fillText(word, (w - tw)/2, asc + fs*.04);
+  const h = Math.ceil(asc + desc + fs*.1);
+  hero.w = w; hero.h = h; hero.font = fontOf(fs); hero.base = asc + fs*.05;
+  cv.style.height = h + 'px'; cv.width = Math.round(w*dpr); cv.height = Math.round(h*dpr);
+  const oc = off.canvas; oc.width = w; oc.height = h; off.font = hero.font; off.textBaseline = 'alphabetic'; off.fillStyle = '#000';
+  const x0 = (w - off.measureText(word).width)/2; off.fillText(word, x0, hero.base);
+  const cols = letterColors(); const r = rng(7);
+  hero.letters = chars.map((ch,i) => { const lx = x0 + off.measureText(chars.slice(0,i).join('')).width; const col = cols[i % cols.length];
+    return {ch, x:lx, w:off.measureText(ch).width, color:col, V:variants(col, 5, -.28, .2), bind: reduce ? 1 : 0, n:0, d:0, groups:[[],[],[],[],[]]}; });
   const img = off.getImageData(0,0,w,h).data;
-  const step = w < 520 ? 2 : w < 900 ? 4 : 5; const cols = SITE.hero.particleColors; const r = rng(7);
-  hero.parts = []; hero.groups = cols.map(()=>[]);
+  const step = w < 520 ? 2 : w < 900 ? 4 : 5;
+  hero.parts = [];
   for (let y=0; y<h; y+=step) for (let x=0; x<w; x+=step){
-    if (img[(y*w + x)*4 + 3] > 128){
-      const t = (Math.sin(x*.011 + y*.023) + Math.sin(x*.0041 - y*.017 + 2) + 2) / 4;
-      const ci = clamp(Math.floor(t*cols.length + (r()-.5)*.9), 0, cols.length-1);
-      const p = {hx:x, hy:y, x: reduce ? x : w*r(), y: reduce ? y : h + 40 + r()*h*.6, vx:0, vy:0, s: step*(.72 + r()*.4), c:ci, d: reduce ? 0 : (x/w)*500 + r()*300};
-      hero.parts.push(p); hero.groups[ci].push(p);
-    }
+    if (img[(y*w + x)*4 + 3] < 128) continue;
+    let li = hero.letters.findIndex(L => x >= L.x && x < L.x + L.w); if (li < 0) li = x < w/2 ? 0 : hero.letters.length-1;
+    // start in a heap of powder at the bottom centre
+    const sx = w/2 + (r()+r()+r()-1.5)*w*.22, sy = h - 2 - r()*h*.75*Math.exp(-Math.pow((sx-w/2)/(w*.16),2));
+    const p = {hx:x, hy:y, x: reduce ? x : sx, y: reduce ? y : sy, vx:0, vy:0, s: step*(.75 + r()*.45), L:li, d: reduce ? 0 : 350 + r()*900};
+    hero.parts.push(p); hero.letters[li].groups[Math.floor(r()*5)].push(p); hero.letters[li].n++;
   }
   hero.x = cv.getContext('2d'); hero.x.setTransform(dpr,0,0,dpr,0,0); hero.t0 = performance.now();
 }
 function stepHero(t){
-  if (!hero.x) return; const x = hero.x, {w,h,ptr} = hero; const el = t - hero.t0; const R = Math.max(60, w*.07), R2 = R*R;
+  if (!hero.x) return; const x = hero.x, {w,h,ptr,letters} = hero; const el = t - hero.t0; const R = Math.max(50, w*.06), R2 = R*R;
   x.clearRect(0,0,w,h);
-  for (let g=0; g<hero.groups.length; g++){
-    x.fillStyle = SITE.hero.particleColors[g];
-    for (const p of hero.groups[g]){
-      if (el > p.d){
-        p.vx += (p.hx - p.x) * .045; p.vy += (p.hy - p.y) * .045;
-        if (ptr.active){ const dx = p.x - ptr.x, dy = p.y - ptr.y, d2 = dx*dx + dy*dy; if (d2 < R2){ const f = (1 - d2/R2) * 7; const d = Math.sqrt(d2) || 1; p.vx += dx/d*f; p.vy += dy/d*f; } }
-        p.vx *= .82; p.vy *= .82; p.x += p.vx; p.y += p.vy;
-      }
-      x.fillRect(p.x, p.y, p.s, p.s);
+  letters.forEach(L => L.d = 0);
+  for (const p of hero.parts){
+    if (el > p.d){
+      p.vx += (p.hx - p.x) * .05; p.vy += (p.hy - p.y) * .05;
+      if (ptr.active){ const dx = p.x - ptr.x, dy = p.y - ptr.y, d2 = dx*dx + dy*dy; if (d2 < R2){ const f = (1 - d2/R2) * 8; const d = Math.sqrt(d2) || 1; p.vx += dx/d*f; p.vy += dy/d*f; } }
+      p.vx *= .8; p.vy *= .8; p.x += p.vx; p.y += p.vy;
     }
+    letters[p.L].d += Math.abs(p.hx - p.x) + Math.abs(p.hy - p.y);
   }
+  x.font = hero.font; x.textBaseline = 'alphabetic';
+  for (const L of letters){
+    const avg = L.d / (L.n || 1);
+    if (avg < 1.5) L.bind = Math.min(1, L.bind + .022); else L.bind = Math.max(0, L.bind - (avg > 6 ? .2 : .05));
+    if (L.bind < 1){ x.globalAlpha = 1 - L.bind*.9; L.groups.forEach((g,k) => { x.fillStyle = L.V[k]; for (const p of g) x.fillRect(p.x, p.y, p.s, p.s); }); }
+    if (L.bind > 0){ x.globalAlpha = L.bind; x.fillStyle = L.color; x.fillText(L.ch, L.x, hero.base); }
+  }
+  x.globalAlpha = 1;
 }
 function heroPointer(e){ const r = hero.cv.getBoundingClientRect(); hero.ptr.x = e.clientX - r.left; hero.ptr.y = e.clientY - r.top; hero.ptr.active = true; }
-function heroBurst(e){ heroPointer(e); const {x:px, y:py} = hero.ptr; for (const p of hero.parts){ const dx = p.x-px, dy = p.y-py, d = Math.hypot(dx,dy)||1; if (d < hero.w*.25){ const f = (1 - d/(hero.w*.25))*38; p.vx += dx/d*f; p.vy += dy/d*f - 4; } } }
+function heroBurst(e){ heroPointer(e); const {x:px, y:py} = hero.ptr; for (const p of hero.parts){ const dx = p.x-px, dy = p.y-py, d = Math.hypot(dx,dy)||1; if (d < hero.w*.2){ const f = (1 - d/(hero.w*.2))*34; p.vx += dx/d*f; p.vy += dy/d*f - 5; } } }
 
 /* ---------- quarry strata ---------- */
 let grainPat = null;
@@ -1048,7 +1077,8 @@ function show(r){
   $('#readbar').hidden = r.view !== 'article';
   const t = r.anchor ? document.getElementById(r.anchor) : null;
   if (t) t.scrollIntoView({block:'start'}); else scrollTo(0,0);
-  if (r.view === VIEWS[0] && !hero.parts.length) buildHero();
+  hydrate($(`[data-view="${r.view}"]`));
+  if (r.view === VIEWS[0] && fontsOK && !hero.parts.length) buildHero();
   const label = r.view === 'article' ? (SITE.journal.find(a=>a.id===r.id)||{}).title : (SITE.nav.find(n=>n.id===r.view)||{}).label;
   document.title = r.view === VIEWS[0] ? `${B.name} Ateliers de Couleur` : `${label} · ${B.name}`;
   onScroll();
@@ -1067,7 +1097,7 @@ function onScroll(){
   updateManif(); updateStack(); drawStrata();
   if (current === 'article'){ const a = $('[data-view="article"] article'); if (a){ const k = clamp((scrollY - a.offsetTop + innerHeight*.3)/(a.offsetHeight - innerHeight*.7), 0, 1); $('#readbar').style.transform = `scaleX(${k})`; } }
 }
-addEventListener('scroll', onScroll, {passive:true});
+let scrollQueued = false; addEventListener('scroll', () => { if (scrollQueued) return; scrollQueued = true; requestAnimationFrame(() => { scrollQueued = false; onScroll(); }); }, {passive:true});
 function loop(t){
   if (current === VIEWS[0]){
     if (hero.visible) stepHero(t);
@@ -1088,11 +1118,13 @@ function boot(){
   hc.addEventListener('pointermove', heroPointer); hc.addEventListener('pointerleave', () => hero.ptr.active = false);
   hc.addEventListener('pointerdown', heroBurst); hc.addEventListener('pointerup', () => { if (!fine) hero.ptr.active = false; });
   current = null; show(route());
-  if (reduce){ stepHero(0); drawPot(1e9); setInterval(()=>{ if (hero.ptr.active) stepHero(performance.now()); }, 50); }
+  if (reduce){ drawPot(1e9); setInterval(()=>{ stepHero(performance.now()); }, 80); }
   requestAnimationFrame(loop);
   setInterval(() => { const s = $('#status'), st = openState(); if (s){ s.className = 'status' + (st.open ? '' : ' closed'); s.lastChild.textContent = st.text; } }, 60e3);
 }
-const fontsReady = document.fonts ? Promise.race([document.fonts.load(`900 100px "${SITE.theme.fontUi}"`), new Promise(r=>setTimeout(r,2500))]) : Promise.resolve();
-fontsReady.then(boot, boot);
+let fontsOK = false;
+boot();
+const fontsReady = document.fonts ? Promise.race([document.fonts.load(`900 100px "${SITE.theme.fontUi}"`), new Promise(r=>setTimeout(r,3000))]) : Promise.resolve();
+fontsReady.then(() => { fontsOK = true; if (current === VIEWS[0]) buildHero(); }, () => { fontsOK = true; if (current === VIEWS[0]) buildHero(); });
 })();
 </script>
