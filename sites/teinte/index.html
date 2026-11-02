@@ -66,7 +66,7 @@ p{margin:0}
 
 /* ---------- header ---------- */
 body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:61;background:var(--paper)}
-.hd{position:sticky;top:env(safe-area-inset-top,0px);z-index:60;background:color-mix(in srgb, var(--paper) 88%, transparent);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-bottom:1px solid transparent;transition:border-color .3s}
+.hd{position:sticky;top:env(safe-area-inset-top,0px);z-index:60;background:color-mix(in srgb, var(--paper) 96%, transparent);border-bottom:1px solid transparent;transition:border-color .3s}
 .hd.scrolled{border-bottom-color:var(--line)}
 .hd .wrap{display:flex;align-items:center;gap:24px;height:68px}
 .logo{display:flex;align-items:center;gap:10px;text-decoration:none;font-weight:900;font-stretch:125%;font-size:1.35rem;letter-spacing:-.01em}
@@ -130,8 +130,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 @media (min-width:900px){.sec-head{grid-template-columns:1fr 1fr;align-items:end;gap:40px}}
 .sec-head h2{font-size:clamp(2.4rem,6.5vw,5.6rem);font-stretch:118%;letter-spacing:-.03em;line-height:.95}
 .sec-head .label{color:var(--accent);transition:color .6s}
-.strata-box{position:relative}
-.strata-box canvas{display:block;width:100%;height:clamp(420px,70vh,720px)}
+.strata-box{position:relative;overflow:hidden;height:clamp(420px,70vh,720px);background:linear-gradient(#C9D6E2, var(--paper) 30%)}
 .legend{display:flex;flex-wrap:wrap;gap:10px 22px;padding-block:22px 0;font-weight:600;font-size:.92rem}
 .legend span{display:inline-flex;align-items:center;gap:8px}
 .legend small{font-weight:500;color:var(--muted)}
@@ -141,6 +140,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 .stack{display:grid;gap:28px}
 .card{position:sticky;top:calc(90px + var(--i) * 14px);min-height:min(76vh,620px);border-radius:28px;padding:clamp(22px,3.5vw,48px);display:grid;gap:26px;transform-origin:50% 0;color:var(--c-ink);background:var(--c-bg);box-shadow:0 -1px 0 rgba(0,0,0,.04);will-change:transform}
 @media (min-width:900px){.card{grid-template-columns:1.1fr 1fr;align-items:stretch}}
+.card::after{content:"";position:absolute;inset:0;border-radius:inherit;background:#000;opacity:var(--dim,0);pointer-events:none}
 .card .num{font-weight:900;font-stretch:125%;font-size:clamp(4.5rem,12vw,10rem);line-height:.8;letter-spacing:-.04em}
 .card .num small{font-size:.28em;letter-spacing:0;font-weight:700;margin-left:.15em}
 .card h3{font-size:clamp(2rem,4vw,3.2rem);font-stretch:115%;letter-spacing:-.02em;margin-top:18px}
@@ -705,7 +705,7 @@ function renderHome(){
   </div>
   <div class="manif"><div class="wrap"><span class="label">${esc(M.label)}</span><p class="big" id="manifText">${words}</p><div class="sig"><span class="dot" style="background:var(--accent);width:34px;height:34px"></span><span>${esc(M.signature)}</span></div></div></div>
   <div class="quarry" id="${Q.id}"><div class="wrap"><div class="sec-head"><div><span class="label">${esc(Q.label)}</span><h2>${esc(Q.title)}</h2></div><p class="prose">${esc(Q.text)}</p></div></div>
-    <div class="strata-box"><canvas id="strataCv" role="img" aria-label="Coupe de la falaise d'ocre, couches de couleur superposées"></canvas></div>
+    <div class="strata-box" id="strata" role="img" aria-label="Coupe de la falaise d'ocre, couches de couleur superposées"></div>
     <div class="wrap"><div class="legend">${Q.layers.map(l=>`<span><i class="dot" style="background:${l.hex}"></i>${esc(l.name)} <small>${esc(l.depth)}</small></span>`).join('')}</div></div></div>
   <div class="steps" id="${PR.id}"><div class="wrap"><div class="sec-head"><div><span class="label">${esc(PR.label)}</span><h2>${esc(PR.title)}</h2></div><p class="prose">${esc(PR.text)}</p></div>
     <div class="stack" id="stack">${PR.steps.map((s,i)=>`
@@ -961,40 +961,53 @@ function stepHero(t){
 function heroPointer(e){ const r = hero.cv.getBoundingClientRect(); hero.ptr.x = e.clientX - r.left; hero.ptr.y = e.clientY - r.top; hero.ptr.active = true; }
 function heroBurst(e){ heroPointer(e); const {x:px, y:py} = hero.ptr; for (const p of hero.parts){ const dx = p.x-px, dy = p.y-py, d = Math.hypot(dx,dy)||1; if (d < hero.w*.2){ const f = (1 - d/(hero.w*.2))*34; p.vx += dx/d*f; p.vy += dy/d*f - 5; } } }
 
-/* ---------- quarry strata ---------- */
-let grainPat = null;
-function drawStrata(){
-  const cv = $('#strataCv'); if (!cv || cv.closest('.view').hidden) return;
-  const r = cv.getBoundingClientRect(); if (r.bottom < 0 || r.top > innerHeight) return;
-  const dpr = Math.min(devicePixelRatio||1, 2), W = r.width, H = r.height;
-  if (cv.width !== Math.round(W*dpr) || cv.height !== Math.round(H*dpr)){ cv.width = Math.round(W*dpr); cv.height = Math.round(H*dpr); }
-  const x = cv.getContext('2d'); x.setTransform(dpr,0,0,dpr,0,0);
-  const prog = clamp((innerHeight - r.top) / (innerHeight + H), 0, 1);
-  const sky = x.createLinearGradient(0,0,0,H*.3); sky.addColorStop(0,'#C9D6E2'); sky.addColorStop(1, SITE.theme.paper); x.fillStyle = sky; x.fillRect(0,0,W,H);
-  const L = SITE.quarry.layers, n = L.length;
+/* ---------- quarry strata ----------
+   Each layer is painted ONCE into its own small canvas (band height only), then moved with a
+   GPU transform on scroll: no repaint while scrolling. */
+let grainPat = null; const strata = {w:0, h:0, layers:[], box:null};
+function buildStrata(){
+  const box = strata.box = $('#strata'); if (!box || !box.clientWidth) return;
+  const W = box.clientWidth, H = box.clientHeight; if (W === strata.w && H === strata.h) return;
+  strata.w = W; strata.h = H; box.querySelectorAll('canvas').forEach(c => c.remove()); strata.layers = [];
+  const dpr = Math.min(devicePixelRatio||1, 1.5), L = SITE.quarry.layers, n = L.length;
   const nz = (X,i) => Math.sin(X*.0042 + i*1.7)*.55 + Math.sin(X*.0113 + i*3.1)*.3 + Math.sin(X*.031 + i*.7)*.15;
-  const topOf = (X,i) => H*(.16 + i*(.84/n)) + (prog-.5)*H*.18*(i/n) + nz(X,i)*H*.045 - (i===0 ? Math.max(0, Math.sin(X*.0022+1))*H*.06 : 0);
+  const base = i => H*(.16 + i*(.84/n));
+  const topOf = (X,i) => base(i) + nz(X,i)*H*.045 - (i===0 ? Math.max(0, Math.sin(X*.0022+1))*H*.06 : 0);
+  if (!grainPat){ const gc = document.createElement('canvas'); gc.width = gc.height = 160; const gx = gc.getContext('2d'), gi = gx.createImageData(160,160), gr = rng(5); for (let i=0;i<gi.data.length;i+=4){ const v = gr()*255; gi.data[i]=gi.data[i+1]=gi.data[i+2]=v; gi.data[i+3]=38; } gx.putImageData(gi,0,0); grainPat = gc; }
+  const rr = rng(99);
   for (let i=0;i<n;i++){
-    x.beginPath(); x.moveTo(0,H); for (let X=0; X<=W+8; X+=8) x.lineTo(X, topOf(X,i)); x.lineTo(W,H); x.closePath();
-    const g = x.createLinearGradient(0, topOf(0,i), 0, H); g.addColorStop(0, shade(L[i].hex,.1)); g.addColorStop(.25, L[i].hex); g.addColorStop(1, shade(L[i].hex,-.2)); x.fillStyle = g; x.fill();
+    const y0 = Math.max(0, base(i) - H*(i===0 ? .2 : .1)), y1 = i === n-1 ? H*1.12 : base(i+1) + H*.12, bh = y1 - y0;
+    const c = document.createElement('canvas'); c.width = Math.round(W*dpr); c.height = Math.round(bh*dpr);
+    c.style.cssText = `position:absolute;left:0;top:${y0}px;width:${W}px;height:${bh}px;will-change:transform;z-index:${i+1}`;
+    const x = c.getContext('2d'); x.setTransform(dpr,0,0,dpr,0,-y0*dpr);
+    x.beginPath(); x.moveTo(0,y1); for (let X=0; X<=W+8; X+=8) x.lineTo(X, topOf(X,i)); x.lineTo(W,y1); x.closePath();
+    const g = x.createLinearGradient(0, base(i) - H*.05, 0, y1); g.addColorStop(0, shade(L[i].hex,.1)); g.addColorStop(.3, L[i].hex); g.addColorStop(1, shade(L[i].hex,-.2)); x.fillStyle = g; x.fill();
+    x.save(); x.clip();
+    x.lineCap = 'round';
+    for (let k=0;k<W/60;k++){ const X = rr()*W, ys = topOf(X,i) + 4, len = 30 + rr()*H*.14;
+      x.strokeStyle = `rgba(40,20,10,${.05 + rr()*.09})`; x.lineWidth = 1 + rr()*3; x.beginPath(); x.moveTo(X,ys); x.quadraticCurveTo(X + (rr()-.5)*8, ys+len/2, X + (rr()-.5)*6, ys+len); x.stroke();
+      x.strokeStyle = `rgba(255,240,220,${.05 + rr()*.07})`; x.lineWidth = 1; x.beginPath(); x.moveTo(X+2,ys); x.lineTo(X+3,ys+len*.7); x.stroke(); }
+    x.globalCompositeOperation = 'overlay'; x.fillStyle = x.createPattern(grainPat,'repeat'); x.fillRect(0,y0,W,bh); x.globalCompositeOperation = 'source-over';
+    x.restore();
+    if (i === 0){ for (let k=0;k<W/26;k++){ const X = rr()*W, y = topOf(X,0) + 2, sz = 6 + rr()*16; if (rr() < .45) continue; x.fillStyle = rr() < .5 ? '#3E4A32' : '#2F3A27';
+      x.beginPath(); x.ellipse(X, y - sz*.9, sz*1.1, sz*.65, 0, 0, Math.PI*2); x.fill(); x.fillRect(X-1, y - sz*.4, 2, sz*.5); } }
+    box.append(c); strata.layers.push(c);
   }
-  // erosion flutes typical of ochre cliffs
-  const rr = rng(99); x.lineCap = 'round';
-  for (let k=0;k<W/9;k++){ const X = rr()*W, i = Math.floor(rr()*n), y0 = topOf(X,i) + 4, len = 30 + rr()*H*.25; x.strokeStyle = `rgba(40,20,10,${.05 + rr()*.09})`; x.lineWidth = 1 + rr()*3; x.beginPath(); x.moveTo(X,y0); x.quadraticCurveTo(X + (rr()-.5)*8, y0+len/2, X + (rr()-.5)*6, y0+len); x.stroke();
-    x.strokeStyle = `rgba(255,240,220,${.05 + rr()*.07})`; x.lineWidth = 1; x.beginPath(); x.moveTo(X+2,y0); x.lineTo(X+3,y0+len*.7); x.stroke(); }
-  // pines on the crest
-  for (let k=0;k<W/26;k++){ const X = rr()*W, y = topOf(X,0) + 2, s = 6 + rr()*16; if (rr() < .45) continue; x.fillStyle = rr() < .5 ? '#3E4A32' : '#2F3A27';
-    x.beginPath(); x.ellipse(X, y - s*.9, s*1.1, s*.65, 0, 0, Math.PI*2); x.fill(); x.fillRect(X-1, y - s*.4, 2, s*.5); }
-  if (!grainPat){ const gc = document.createElement('canvas'); gc.width = gc.height = 160; const gx = gc.getContext('2d'), gi = gx.createImageData(160,160), gr = rng(5); for (let i=0;i<gi.data.length;i+=4){ const v = gr()*255; gi.data[i]=gi.data[i+1]=gi.data[i+2]=v; gi.data[i+3]=38; } gx.putImageData(gi,0,0); grainPat = x.createPattern(gc,'repeat'); }
-  x.globalCompositeOperation = 'overlay'; x.fillStyle = grainPat; x.fillRect(0,0,W,H); x.globalCompositeOperation = 'source-over';
+}
+function drawStrata(){
+  const box = strata.box || (strata.box = $('#strata')); if (!box || box.closest('.view').hidden) return;
+  if (!strata.layers.length || box.clientWidth !== strata.w) buildStrata();
+  const r = box.getBoundingClientRect(); if (r.bottom < -200 || r.top > innerHeight + 200) return;
+  const prog = clamp((innerHeight - r.top) / (innerHeight + r.height), 0, 1), n = strata.layers.length;
+  strata.layers.forEach((c,i) => { c.style.transform = `translate3d(0,${((prog-.5)*r.height*.18*(i/n)).toFixed(1)}px,0)`; });
 }
 
 /* ---------- manifesto words ---------- */
-function updateManif(){ const el = $('#manifText'); if (!el || el.closest('.view').hidden) return; const mid = innerHeight*.66; $$('span', el).forEach(s => s.classList.toggle('on', s.getBoundingClientRect().top < mid)); }
+function updateManif(){ const el = $('#manifText'); if (!el || el.closest('.view').hidden) return; const rr = el.getBoundingClientRect(); if (rr.bottom < 0 || rr.top > innerHeight) return; const mid = innerHeight*.66; $$('span', el).forEach(s => s.classList.toggle('on', s.getBoundingClientRect().top < mid)); }
 
 /* ---------- process stack ---------- */
 function updateStack(){ const cards = $$('#stack .card'); if (!cards.length || cards[0].closest('.view').hidden || reduce) return;
-  cards.forEach((c,i) => { const nx = cards[i+1]; if (!nx){ c.style.transform = ''; return; } const k = clamp(1 - (nx.getBoundingClientRect().top - c.getBoundingClientRect().top) / c.offsetHeight, 0, 1); c.style.transform = `scale(${1 - k*.06})`; c.style.filter = `brightness(${1 - k*.18})`; }); }
+  cards.forEach((c,i) => { const nx = cards[i+1]; if (!nx){ c.style.transform = ''; return; } const k = clamp(1 - (nx.getBoundingClientRect().top - c.getBoundingClientRect().top) / c.offsetHeight, 0, 1); c.style.transform = `scale(${(1 - k*.06).toFixed(4)})`; c.style.setProperty('--dim', (k*.22).toFixed(3)); }); }
 
 /* ---------- mixer ---------- */
 let mixSel = SITE.mixer.defaults.map(d=>({...d}));
@@ -1105,7 +1118,7 @@ function loop(t){
   }
   requestAnimationFrame(loop);
 }
-let rz; addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(() => { const w = hero.cv && hero.cv.parentElement.clientWidth; if (w && Math.abs(w - hero.w) > 2) buildHero(); grainPat = null; onScroll(); }, 160); });
+let rz; addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(() => { const w = hero.cv && hero.cv.parentElement.clientWidth; if (w && Math.abs(w - hero.w) > 2) buildHero(); strata.w = 0; onScroll(); }, 160); });
 
 /* ---------- boot ---------- */
 function boot(){
