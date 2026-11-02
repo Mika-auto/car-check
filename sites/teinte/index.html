@@ -1,0 +1,1098 @@
+<meta charset="utf-8">
+<title>Teinte Ateliers de Couleur</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link id="fontlink" rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:ital,wdth,wght@0,62..125,100..900;1,62..125,100..900&family=Newsreader:ital,opsz,wght@0,6..72,300..700;1,6..72,300..700&display=swap">
+<style>
+/* ============================================================
+   MOTEUR DE SITE VITRINE · thème
+   Layout : pages "à plat" en bandes de couleur pleine largeur, contenu sur une grille 12 colonnes.
+   Les valeurs ci-dessous sont des valeurs par défaut : le moteur les remplace par SITE.theme au démarrage.
+   ============================================================ */
+:root{
+  --paper:#F6F5F1;     /* fond : blanc de craie */
+  --paper-2:#EBE8E0;   /* fond secondaire */
+  --ink:#1D1C21;       /* texte : noir de vigne */
+  --muted:#57544D;     /* texte secondaire (contraste AA sur --paper) */
+  --line:#D3CFC5;      /* filets */
+  --accent:#2B3BC0;    /* couleur signature (modifiable en direct par le nuancier) */
+  --accent-ink:#FFFFFF;/* texte posé sur --accent, calculé automatiquement */
+  --f-ui:"Archivo","Helvetica Neue",Arial,sans-serif;
+  --f-text:"Newsreader",Georgia,"Times New Roman",serif;
+  --gl:max(16px, env(safe-area-inset-left, 0px));
+  --gr:max(16px, env(safe-area-inset-right, 0px));
+  --ease:cubic-bezier(.22,.8,.12,1);
+  color-scheme:light;
+}
+[hidden]{display:none!important}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--f-ui);font-size:17px;line-height:1.55;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+body.lock{overflow:hidden}
+img{max-width:100%;display:block}
+a{color:inherit}
+button{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--accent);outline-offset:3px;border-radius:4px}
+::selection{background:var(--accent);color:var(--accent-ink)}
+h1,h2,h3,h4{margin:0;text-wrap:balance;font-weight:800}
+p{margin:0}
+.wrap{max-width:1360px;margin-inline:auto;padding-left:var(--gl);padding-right:var(--gr)}
+@media (min-width:900px){.wrap{padding-left:max(40px, env(safe-area-inset-left,0px));padding-right:max(40px, env(safe-area-inset-right,0px))}}
+.label{font-family:var(--f-ui);font-size:.8rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase}
+.display{font-family:var(--f-ui);font-weight:800;font-stretch:118%;letter-spacing:-.02em;line-height:.98}
+.prose{font-family:var(--f-text);font-size:1.18rem;line-height:1.6;max-width:62ch}
+.prose em{font-style:italic}
+.muted{color:var(--muted)}
+.skip{position:absolute;left:-9999px;top:8px;z-index:200;background:var(--ink);color:var(--paper);padding:10px 14px;border-radius:6px}
+.skip:focus{left:16px}
+.tnum{font-variant-numeric:tabular-nums}
+
+/* ---------- buttons ---------- */
+.btn{display:inline-flex;align-items:center;gap:10px;font-family:var(--f-ui);font-weight:700;font-size:.95rem;padding:15px 22px;border-radius:999px;border:2px solid var(--ink);background:var(--ink);color:var(--paper);text-decoration:none;cursor:pointer;transition:transform .35s var(--ease),background .3s,color .3s,border-color .3s;line-height:1.1}
+.btn:hover{transform:translateY(-2px)}
+.btn.ghost{background:transparent;color:var(--ink)}
+.btn.ghost:hover{background:var(--ink);color:var(--paper)}
+.btn.accent{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.small{padding:10px 16px;font-size:.85rem}
+.btn[disabled]{opacity:.4;cursor:not-allowed;transform:none}
+.btn .arr{transition:transform .35s var(--ease)}
+.btn:hover .arr{transform:translateX(4px)}
+.chip{display:inline-flex;align-items:center;gap:8px;padding:9px 14px;border-radius:999px;border:1.5px solid var(--line);background:var(--paper);font-weight:600;font-size:.9rem;cursor:pointer;transition:border-color .2s,background .2s}
+.chip:hover{border-color:var(--ink)}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.dot{width:14px;height:14px;border-radius:50%;flex:none;box-shadow:inset 0 0 0 1px rgba(0,0,0,.12)}
+
+/* ---------- header ---------- */
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:61;background:var(--paper)}
+.hd{position:sticky;top:env(safe-area-inset-top,0px);z-index:60;background:color-mix(in srgb, var(--paper) 88%, transparent);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-bottom:1px solid transparent;transition:border-color .3s}
+.hd.scrolled{border-bottom-color:var(--line)}
+.hd .wrap{display:flex;align-items:center;gap:24px;height:68px}
+.logo{display:flex;align-items:center;gap:10px;text-decoration:none;font-weight:900;font-stretch:125%;font-size:1.35rem;letter-spacing:-.01em}
+.logo i{width:16px;height:16px;border-radius:50%;background:var(--accent);transition:background .6s}
+.nav{display:flex;gap:6px;margin-left:auto}
+.nav a{text-decoration:none;font-weight:600;font-size:.95rem;padding:9px 14px;border-radius:999px;transition:background .25s}
+.nav a:hover{background:var(--paper-2)}
+.nav a[aria-current="page"]{background:var(--ink);color:var(--paper)}
+.status{display:flex;align-items:center;gap:8px;font-size:.85rem;color:var(--muted);white-space:nowrap}
+.status b{width:8px;height:8px;border-radius:50%;background:#2E8B57;box-shadow:0 0 0 4px rgba(46,139,87,.18)}
+.status.closed b{background:#B4452E;box-shadow:0 0 0 4px rgba(180,69,46,.16)}
+.cartbtn{display:inline-flex;align-items:center;gap:8px;border:1.5px solid var(--ink);background:transparent;border-radius:999px;padding:8px 14px;font-weight:700;font-size:.9rem;cursor:pointer}
+.cartbtn .n{display:inline-grid;place-items:center;min-width:22px;height:22px;padding:0 6px;border-radius:999px;background:var(--accent);color:var(--accent-ink);font-size:.78rem;transition:background .6s}
+.cartbtn.bump .n{animation:bump .5s var(--ease)}
+@keyframes bump{40%{transform:scale(1.35)}}
+.burger{display:none;border:0;background:var(--ink);color:var(--paper);border-radius:999px;padding:9px 14px;font-weight:700;font-size:.9rem;cursor:pointer}
+@media (max-width:980px){.nav,.status{display:none}.burger{display:inline-flex}.cartbtn{margin-left:auto}}
+.menu{position:fixed;inset:0;z-index:80;background:var(--accent);color:var(--accent-ink);display:flex;flex-direction:column;padding-top:calc(env(safe-area-inset-top,0px) + 18px);padding-bottom:calc(env(safe-area-inset-bottom,0px) + 24px);padding-left:var(--gl);padding-right:var(--gr)}
+.menu-top{display:flex;justify-content:space-between;align-items:center}
+.menu-top button{border:1.5px solid currentColor;background:transparent;border-radius:999px;padding:9px 14px;font-weight:700;cursor:pointer}
+.menu nav{display:grid;gap:4px;margin-top:auto;margin-bottom:auto}
+.menu nav a{text-decoration:none;font-weight:800;font-stretch:120%;font-size:clamp(2.4rem,11vw,4rem);line-height:1.05;letter-spacing:-.02em}
+.menu-foot{display:grid;gap:4px;font-size:.95rem}
+
+/* ---------- page transition ---------- */
+.wipe{position:fixed;inset:0;z-index:150;background:var(--accent);color:var(--accent-ink);display:grid;place-items:center;pointer-events:none;clip-path:inset(100% 0 0 0);transition:clip-path .5s var(--ease)}
+.wipe.in{clip-path:inset(0 0 0 0)}
+.wipe.out{clip-path:inset(0 0 100% 0)}
+.wipe span{font-weight:900;font-stretch:125%;font-size:clamp(2.5rem,9vw,7rem);letter-spacing:-.03em}
+
+/* ---------- HERO ---------- */
+.hero{padding-block:clamp(20px,3vw,36px) clamp(40px,6vw,80px);overflow:hidden}
+.hero-top{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px 24px;color:var(--muted)}
+.wordmark{position:relative;margin-block:clamp(10px,2vw,24px)}
+.wordmark canvas{display:block;width:100%;touch-action:pan-y;cursor:crosshair}
+.wordmark .hint{margin-top:10px;justify-content:flex-end;color:var(--muted);font-size:.85rem;display:flex;align-items:center;gap:8px}
+.wordmark .hint::before{content:"";width:28px;height:1.5px;background:currentColor}
+.hero-grid{display:grid;gap:32px;margin-top:clamp(20px,3vw,40px)}
+@media (min-width:980px){.hero-grid{grid-template-columns:1.25fr .9fr .75fr;align-items:end}}
+.hero h1{font-size:clamp(2.1rem,4.4vw,3.6rem);font-stretch:112%;line-height:1;letter-spacing:-.025em}
+.hero h1 mark{background:none;color:var(--accent);transition:color .6s}
+.hero .prose{font-size:1.15rem}
+.ctas{display:flex;flex-wrap:wrap;gap:12px;margin-top:22px}
+.daycard{display:grid;grid-template-columns:96px 1fr;gap:16px;align-items:center;padding:14px;border-radius:18px;background:var(--paper-2);text-decoration:none;cursor:pointer;border:0;text-align:left;width:100%}
+.daycard img{width:96px;height:96px;object-fit:cover;border-radius:12px}
+.daycard strong{display:block;font-size:1.15rem;font-stretch:110%}
+.daycard .label{color:var(--muted)}
+
+/* ---------- manifesto ---------- */
+.manif{background:var(--ink);color:var(--paper);padding-block:clamp(80px,12vw,160px)}
+.manif .label{color:color-mix(in srgb, var(--paper) 70%, transparent)}
+.manif p.big{font-weight:700;font-stretch:108%;font-size:clamp(1.8rem,4.6vw,4rem);line-height:1.08;letter-spacing:-.02em;max-width:24ch;margin-top:28px}
+.manif p.big span{color:color-mix(in srgb, var(--paper) 42%, var(--ink));transition:color .5s}
+.manif p.big span.on{color:var(--paper)}
+.manif p.big mark{background:none;color:inherit;border-bottom:.08em solid var(--accent)}
+.manif .sig{margin-top:40px;display:flex;gap:16px;align-items:center;color:color-mix(in srgb, var(--paper) 75%, transparent)}
+
+/* ---------- carrière (strata) ---------- */
+.quarry{padding-block:clamp(80px,10vw,140px) 0}
+.sec-head{display:grid;gap:18px;margin-bottom:clamp(30px,4vw,56px)}
+@media (min-width:900px){.sec-head{grid-template-columns:1fr 1fr;align-items:end;gap:40px}}
+.sec-head h2{font-size:clamp(2.4rem,6.5vw,5.6rem);font-stretch:118%;letter-spacing:-.03em;line-height:.95}
+.sec-head .label{color:var(--accent);transition:color .6s}
+.strata-box{position:relative}
+.strata-box canvas{display:block;width:100%;height:clamp(420px,70vh,720px)}
+.legend{display:flex;flex-wrap:wrap;gap:10px 22px;padding-block:22px 0;font-weight:600;font-size:.92rem}
+.legend span{display:inline-flex;align-items:center;gap:8px}
+.legend small{font-weight:500;color:var(--muted)}
+
+/* ---------- gestes (stacking cards) ---------- */
+.steps{padding-block:clamp(80px,10vw,140px)}
+.stack{display:grid;gap:28px}
+.card{position:sticky;top:calc(90px + var(--i) * 14px);min-height:min(76vh,620px);border-radius:28px;padding:clamp(22px,3.5vw,48px);display:grid;gap:26px;transform-origin:50% 0;color:var(--c-ink);background:var(--c-bg);box-shadow:0 -1px 0 rgba(0,0,0,.04);will-change:transform}
+@media (min-width:900px){.card{grid-template-columns:1.1fr 1fr;align-items:stretch}}
+.card .num{font-weight:900;font-stretch:125%;font-size:clamp(4.5rem,12vw,10rem);line-height:.8;letter-spacing:-.04em}
+.card .num small{font-size:.28em;letter-spacing:0;font-weight:700;margin-left:.15em}
+.card h3{font-size:clamp(2rem,4vw,3.2rem);font-stretch:115%;letter-spacing:-.02em;margin-top:18px}
+.card .prose{font-size:1.12rem;margin-top:14px}
+.card .left{display:flex;flex-direction:column;justify-content:space-between;gap:24px}
+.card .pic{border-radius:18px;overflow:hidden;min-height:220px;background-size:cover;background-position:center}
+@media (max-width:899px){.card{min-height:0;top:calc(80px + var(--i) * 10px)}.card .pic{min-height:0;height:150px}.card .num{font-size:clamp(3.6rem,18vw,5rem)}}
+.card .meta{display:flex;flex-wrap:wrap;gap:8px}
+.card .meta span{border:1.5px solid currentColor;border-radius:999px;padding:6px 12px;font-weight:600;font-size:.85rem}
+
+/* ---------- nuancier (mixer) ---------- */
+.mixer{background:var(--paper-2);padding-block:clamp(80px,10vw,140px)}
+.mix-grid{display:grid;gap:clamp(24px,4vw,56px)}
+@media (min-width:980px){.mix-grid{grid-template-columns:1fr 1fr;align-items:start}}
+.pot-wrap{position:relative;display:grid;place-items:center;aspect-ratio:1;max-width:560px;width:100%;margin-inline:auto}
+.pot-wrap canvas{width:100%;height:100%;display:block}
+.result{display:grid;gap:6px;margin-top:22px;text-align:center}
+.result .name{font-weight:800;font-stretch:115%;font-size:clamp(1.6rem,3vw,2.3rem);letter-spacing:-.02em}
+.result .recipe{color:var(--muted)}
+.result .actions{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-top:14px}
+.palette{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px}
+.sliders{display:grid;gap:16px;margin-top:26px}
+.slider{display:grid;grid-template-columns:auto 1fr auto auto;gap:14px;align-items:center;background:var(--paper);border-radius:16px;padding:12px 14px}
+.slider label{font-weight:700;display:flex;gap:10px;align-items:center;min-width:0}
+.slider input[type=range]{width:100%;accent-color:var(--ink);min-width:0}
+.slider .pct{font-weight:700;width:3.2em;text-align:right}
+.slider button{border:0;background:transparent;font-size:1.3rem;cursor:pointer;color:var(--muted);line-height:1;padding:4px}
+.slider-empty{padding:18px;border:1.5px dashed var(--line);border-radius:16px;color:var(--muted)}
+@media (max-width:520px){.slider{grid-template-columns:1fr auto auto}.slider input[type=range]{grid-column:1 / -1;grid-row:2}}
+
+/* ---------- stats ---------- */
+.stats{padding-block:clamp(60px,8vw,110px);border-bottom:1px solid var(--line)}
+.stats-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:30px 20px}
+@media (min-width:900px){.stats-grid{grid-template-columns:repeat(4,minmax(0,1fr))}}
+.stat strong{display:block;font-weight:900;font-stretch:125%;font-size:clamp(2.8rem,6vw,5rem);line-height:1;letter-spacing:-.03em}
+.stat span{display:block;margin-top:8px;color:var(--muted);max-width:22ch}
+
+/* ---------- pigment cards ---------- */
+.feat{padding-block:clamp(80px,10vw,140px)}
+.grid-p{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,250px),1fr));gap:clamp(16px,2vw,26px)}
+.pcard{display:grid;gap:12px;text-align:left;background:transparent;border:0;padding:0;cursor:pointer;min-width:0}
+.pcard .img{aspect-ratio:4/3;border-radius:18px;overflow:hidden;background:var(--paper-2);position:relative}
+.pcard .img img{width:100%;height:100%;object-fit:cover;transition:transform .9s var(--ease)}
+.pcard:hover .img img{transform:scale(1.06)}
+.pcard .img .ci{position:absolute;left:12px;top:12px;background:var(--paper);border-radius:999px;padding:5px 10px;font-weight:700;font-size:.78rem}
+.pcard .row{display:flex;justify-content:space-between;gap:12px;align-items:baseline}
+.pcard h3{font-size:1.2rem;font-stretch:108%;font-weight:700}
+.pcard .price{font-weight:700;white-space:nowrap}
+.pcard .sub{color:var(--muted);font-size:.92rem}
+.toolbar{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;margin-bottom:28px}
+.filters{display:flex;flex-wrap:wrap;gap:8px}
+.search{display:flex;gap:10px;align-items:center}
+.search input,.search select{font:inherit;font-size:.95rem;padding:10px 14px;border-radius:999px;border:1.5px solid var(--line);background:var(--paper);color:var(--ink);min-width:0}
+.search input{width:min(260px,100%)}
+.count{color:var(--muted);font-weight:600}
+
+/* ---------- testimonials ---------- */
+.voices{padding-block:clamp(70px,9vw,120px);background:var(--ink);color:var(--paper)}
+.voices .sec-head .label{color:color-mix(in srgb, var(--accent) 55%, var(--paper))}
+.rail{display:grid;grid-auto-flow:column;grid-auto-columns:min(86%,420px);gap:18px;overflow-x:auto;scroll-snap-type:x mandatory;padding-bottom:16px;scrollbar-width:thin}
+.rail figure{margin:0;scroll-snap-align:start;background:color-mix(in srgb, var(--paper) 8%, var(--ink));border-radius:22px;padding:26px;display:flex;flex-direction:column;justify-content:space-between;gap:26px;min-height:300px}
+.rail blockquote{margin:0;font-family:var(--f-text);font-size:1.3rem;line-height:1.4}
+.rail figcaption{display:flex;gap:12px;align-items:center}
+.rail figcaption .dot{width:36px;height:36px}
+.rail figcaption small{display:block;color:color-mix(in srgb, var(--paper) 65%, transparent)}
+
+/* ---------- CTA band ---------- */
+.band{background:var(--accent);color:var(--accent-ink);padding-block:clamp(70px,9vw,120px);transition:background .6s,color .6s}
+.band-in{display:grid;gap:26px}
+@media (min-width:900px){.band-in{grid-template-columns:1.4fr 1fr;align-items:end}}
+.band h2{font-size:clamp(2.4rem,6vw,5.2rem);font-stretch:120%;letter-spacing:-.03em;line-height:.95}
+.band .btn{background:var(--accent-ink);color:var(--accent);border-color:var(--accent-ink)}
+
+/* ---------- page heads ---------- */
+.phead{padding-block:clamp(40px,7vw,90px) clamp(30px,4vw,50px)}
+.phead h1{font-size:clamp(3rem,10vw,8.5rem);font-stretch:122%;letter-spacing:-.04em;line-height:.9}
+.phead .prose{margin-top:22px}
+.crumbs{color:var(--muted);margin-bottom:18px}
+
+/* ---------- atelier / booking ---------- */
+.ws-list{display:grid;gap:16px}
+.ws{display:grid;gap:18px;border:1.5px solid var(--line);border-radius:22px;padding:clamp(18px,2.4vw,28px);cursor:pointer;background:var(--paper);text-align:left;transition:border-color .25s,transform .35s var(--ease);width:100%}
+@media (min-width:760px){.ws{grid-template-columns:140px 1fr auto;align-items:center}}
+.ws:hover{border-color:var(--ink)}
+.ws[aria-pressed="true"]{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent)}
+.ws img{width:140px;height:105px;object-fit:cover;border-radius:14px}
+.ws h3{font-size:1.45rem;font-stretch:112%}
+.ws .info{display:flex;flex-wrap:wrap;gap:6px 16px;color:var(--muted);margin-top:6px;font-size:.95rem}
+.ws .price{font-weight:800;font-size:1.4rem;font-stretch:115%}
+.booking{display:grid;gap:30px;padding-bottom:clamp(80px,10vw,140px)}
+@media (min-width:1080px){.booking{grid-template-columns:1.4fr 1fr;align-items:start}}
+.panel{background:var(--paper-2);border-radius:26px;padding:clamp(20px,3vw,34px);position:sticky;top:90px}
+.steps-nav{display:flex;gap:8px;margin-bottom:22px;flex-wrap:wrap}
+.steps-nav span{padding:6px 12px;border-radius:999px;font-weight:700;font-size:.82rem;background:var(--paper);color:var(--muted)}
+.steps-nav span.on{background:var(--ink);color:var(--paper)}
+.sessions{display:grid;gap:10px}
+.session{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:14px 16px;border-radius:14px;border:1.5px solid var(--line);background:var(--paper);cursor:pointer;text-align:left;width:100%}
+.session[aria-pressed="true"]{border-color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink)}
+.session[disabled]{opacity:.45;cursor:not-allowed}
+.session b{font-weight:700}
+.session small{color:var(--muted);font-weight:600}
+.stepper{display:flex;align-items:center;gap:14px}
+.stepper button{width:44px;height:44px;border-radius:50%;border:1.5px solid var(--ink);background:var(--paper);font-size:1.3rem;cursor:pointer}
+.stepper output{font-weight:800;font-size:1.6rem;min-width:2ch;text-align:center}
+.field{display:grid;gap:6px}
+.field label{font-weight:700;font-size:.92rem}
+.field input,.field select,.field textarea{font:inherit;padding:13px 14px;border-radius:12px;border:1.5px solid var(--line);background:var(--paper);color:var(--ink);width:100%}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--ink);outline:none}
+.field .err{color:#A3361F;font-size:.88rem;min-height:1.2em}
+.form{display:grid;gap:14px}
+.sum{display:grid;gap:8px;border-top:1.5px solid var(--line);padding-top:16px;margin-top:6px}
+.sum div{display:flex;justify-content:space-between;gap:12px}
+.sum .tot{font-weight:800;font-size:1.25rem}
+.note{font-size:.88rem;color:var(--muted)}
+.done{display:grid;gap:14px;text-align:left}
+.done .ref{font-weight:900;font-stretch:125%;font-size:2rem;letter-spacing:-.01em}
+
+/* ---------- journal ---------- */
+.jgrid{display:grid;gap:clamp(20px,3vw,34px);padding-bottom:clamp(80px,10vw,140px)}
+@media (min-width:900px){.jgrid{grid-template-columns:1.3fr 1fr}.jgrid a:first-child{grid-row:span 2}}
+.jcard{display:grid;gap:14px;text-decoration:none}
+.jcard .img{border-radius:22px;overflow:hidden;aspect-ratio:16/10}
+.jgrid a:first-child .img{aspect-ratio:4/3}
+.jcard .img img{width:100%;height:100%;object-fit:cover;transition:transform .9s var(--ease)}
+.jcard:hover .img img{transform:scale(1.04)}
+.jcard h3{font-size:clamp(1.5rem,2.6vw,2.2rem);font-stretch:110%;letter-spacing:-.015em;line-height:1.05}
+.jcard p{color:var(--muted)}
+.article{padding-bottom:clamp(80px,10vw,140px)}
+.article .cover{border-radius:26px;overflow:hidden;aspect-ratio:21/9;margin-block:30px 50px}
+.article .cover img{width:100%;height:100%;object-fit:cover}
+.article h1{font-size:clamp(2.6rem,7vw,6rem);font-stretch:115%;letter-spacing:-.035em;line-height:.95;max-width:16ch}
+.article .lead{font-family:var(--f-text);font-size:clamp(1.3rem,2vw,1.6rem);line-height:1.45;max-width:46ch;margin-top:26px}
+.body{display:grid;gap:22px;margin-inline:auto;max-width:680px}
+.body p{font-family:var(--f-text);font-size:1.2rem;line-height:1.65}
+.body p.first::first-letter{float:left;font-family:var(--f-ui);font-weight:900;font-stretch:125%;font-size:4.6em;line-height:.8;margin:.06em .1em 0 0;color:var(--accent)}
+.body h2{font-size:1.7rem;font-stretch:112%;margin-top:18px}
+.body blockquote{margin:16px 0;padding:0 0 0 22px;border-left:5px solid var(--accent);font-family:var(--f-ui);font-weight:700;font-stretch:108%;font-size:clamp(1.5rem,3vw,2.1rem);line-height:1.15;letter-spacing:-.01em}
+.readbar{position:fixed;left:0;right:0;top:calc(env(safe-area-inset-top,0px) + 68px);height:3px;background:var(--accent);transform-origin:0 0;transform:scaleX(0);z-index:59}
+
+/* ---------- contact ---------- */
+.contact{display:grid;gap:clamp(30px,5vw,70px);padding-bottom:clamp(80px,10vw,140px)}
+@media (min-width:980px){.contact{grid-template-columns:1fr 1.1fr}}
+.infos{display:grid;gap:26px}
+.infos h3{font-size:1rem;color:var(--muted);font-weight:600;letter-spacing:.04em;text-transform:uppercase}
+.infos .big{font-size:clamp(1.4rem,2.4vw,1.9rem);font-weight:700;font-stretch:110%;line-height:1.2}
+.copy{display:flex;flex-wrap:wrap;align-items:center;gap:10px}
+.copy button{border:1.5px solid var(--line);background:var(--paper);border-radius:999px;padding:6px 12px;font-weight:600;font-size:.82rem;cursor:pointer}
+.hours{display:grid;gap:4px;max-width:340px}
+.hours div{display:flex;justify-content:space-between;gap:20px;padding-block:4px;border-bottom:1px solid var(--line)}
+.hours div.today{font-weight:800}
+.faq{display:grid;border-top:1.5px solid var(--ink);margin-top:10px}
+.faq details{border-bottom:1.5px solid var(--line)}
+.faq summary{cursor:pointer;list-style:none;display:flex;justify-content:space-between;gap:16px;padding:18px 0;font-weight:700;font-size:1.12rem}
+.faq summary::-webkit-details-marker{display:none}
+.faq summary::after{content:"+";font-size:1.5rem;line-height:1;transition:transform .3s var(--ease)}
+.faq details[open] summary::after{transform:rotate(45deg)}
+.faq details p{padding:0 0 20px;color:var(--muted);max-width:60ch}
+
+/* ---------- drawers ---------- */
+.scrim{position:fixed;inset:0;background:rgba(20,19,24,.42);z-index:90;opacity:0;pointer-events:none;transition:opacity .4s}
+.scrim.on{opacity:1;pointer-events:auto}
+.drawer{position:fixed;z-index:91;top:0;right:0;bottom:0;width:min(520px,100%);background:var(--paper);display:flex;flex-direction:column;transform:translateX(105%);transition:transform .55s var(--ease),visibility .55s;visibility:hidden;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);padding-right:env(safe-area-inset-right,0px)}
+.drawer.open{transform:none;visibility:visible}
+.drawer-hd{display:flex;justify-content:space-between;align-items:center;padding:18px 22px;border-bottom:1px solid var(--line)}
+.drawer-hd h2{font-size:1.3rem;font-stretch:112%}
+.x{border:1.5px solid var(--ink);background:transparent;border-radius:999px;padding:7px 13px;font-weight:700;cursor:pointer}
+.drawer-body{flex:1;overflow:auto;padding:22px;display:flex;flex-direction:column;gap:18px}
+.drawer-body > *{flex:none}
+.drawer-ft{padding:18px 22px;border-top:1px solid var(--line);display:grid;gap:12px}
+.pd-img{border-radius:20px;overflow:hidden;aspect-ratio:4/3}
+.pd-img img{width:100%;height:100%;object-fit:cover}
+.pd h3{font-size:2rem;font-stretch:115%;letter-spacing:-.02em;line-height:1}
+.specs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));border-top:1px solid var(--line)}
+.specs div{padding:12px 10px 12px 0;border-bottom:1px solid var(--line);min-width:0}
+.specs dt{font-size:.8rem;color:var(--muted);font-weight:600;letter-spacing:.04em;text-transform:uppercase}
+.specs dd{margin:4px 0 0;font-weight:700}
+.line{display:grid;grid-template-columns:64px 1fr auto;gap:14px;align-items:center}
+.line img{width:64px;height:64px;border-radius:12px;object-fit:cover}
+.line .q{display:flex;align-items:center;gap:8px;margin-top:6px}
+.line .q button{width:30px;height:30px;border-radius:50%;border:1.5px solid var(--line);background:var(--paper);cursor:pointer;font-weight:700}
+.line .rm{border:0;background:none;color:var(--muted);cursor:pointer;text-decoration:underline;font-size:.85rem}
+.empty{color:var(--muted);text-align:center;padding:40px 10px}
+.ship{height:6px;border-radius:9px;background:var(--paper-2);overflow:hidden}
+.ship i{display:block;height:100%;background:var(--accent);transition:width .5s var(--ease)}
+@media (max-width:640px){.drawer{top:auto;width:100%;max-height:88svh;border-radius:24px 24px 0 0;transform:translateY(105%)}.drawer.open{transform:none}}
+
+/* ---------- footer ---------- */
+.ft{background:var(--ink);color:var(--paper);padding-block:clamp(70px,9vw,110px) 28px;overflow:hidden}
+.ft-grid{display:grid;gap:34px}
+@media (min-width:900px){.ft-grid{grid-template-columns:1.5fr 1fr 1fr 1fr}}
+.ft h3{font-size:.85rem;letter-spacing:.06em;text-transform:uppercase;font-weight:600;color:color-mix(in srgb, var(--paper) 62%, transparent);margin-bottom:12px}
+.ft ul{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.ft a{text-decoration:none}
+.ft a:hover{text-decoration:underline}
+.ft .news{display:flex;gap:8px;margin-top:16px;max-width:440px}
+.ft .news input{flex:1;min-width:0;font:inherit;padding:12px 16px;border-radius:999px;border:1.5px solid color-mix(in srgb, var(--paper) 35%, transparent);background:transparent;color:var(--paper)}
+.ft .news input::placeholder{color:color-mix(in srgb, var(--paper) 55%, transparent)}
+.ft .news button{border:0;border-radius:999px;padding:12px 18px;background:var(--paper);color:var(--ink);font-weight:700;cursor:pointer}
+.ft .msg{min-height:1.4em;margin-top:8px;color:color-mix(in srgb, var(--accent) 50%, var(--paper))}
+.giant{display:flex;justify-content:space-between;margin-top:clamp(50px,8vw,100px);font-weight:900;font-stretch:125%;font-size:clamp(4rem,17.5vw,17rem);line-height:.8;letter-spacing:-.04em;user-select:none}
+.giant span{transition:color .4s, transform .5s var(--ease);display:inline-block}
+.giant span:hover{transform:translateY(-6%)}
+.legal{display:flex;flex-wrap:wrap;justify-content:space-between;gap:10px;margin-top:30px;color:color-mix(in srgb, var(--paper) 60%, transparent);font-size:.88rem}
+
+/* ---------- toast ---------- */
+.toast{position:fixed;left:50%;bottom:calc(22px + env(safe-area-inset-bottom,0px));transform:translate(-50%,calc(100% + 60px));visibility:hidden;z-index:120;background:var(--ink);color:var(--paper);padding:13px 20px;border-radius:999px;font-weight:600;font-size:.95rem;transition:transform .5s var(--ease),visibility .5s;max-width:calc(100% - 32px);text-align:center;box-shadow:0 10px 30px rgba(0,0,0,.18)}
+.toast.show{transform:translate(-50%,0);visibility:visible}
+
+/* ---------- reveal (enhancement only) ---------- */
+@supports (animation-timeline: view()){
+  .rv{animation:rv linear both;animation-timeline:view();animation-range:entry 0% entry 55%}
+  @keyframes rv{from{opacity:.2;transform:translateY(36px)}}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
+}
+</style>
+
+<a class="skip" href="#views">Aller au contenu</a>
+<header class="hd" id="hd"></header>
+<div class="menu" id="menu" hidden></div>
+<div class="readbar" id="readbar" hidden></div>
+<main id="views"></main>
+<footer class="ft" id="ft"></footer>
+<div class="scrim" id="scrim"></div>
+<aside class="drawer" id="cartDrawer" aria-label="Panier" inert></aside>
+<aside class="drawer" id="pigDrawer" aria-label="Fiche pigment" inert></aside>
+<div class="wipe" id="wipe" aria-hidden="true"><span id="wipeLabel"></span></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+/* ==================================================================
+   1. CONTENU DU SITE
+   Pour adapter ce site à un client : modifier uniquement cet objet.
+   Voir GUIDE.md pour le détail de chaque champ.
+   ================================================================== */
+const SITE = {
+  brand: {
+    name: 'Teinte',
+    legal: 'Teinte, ateliers de couleur',
+    baseline: 'Pigments naturels broyés à la main',
+    place: 'Apt, Luberon',
+    since: 1932,
+    email: 'atelier@teinte.fr',
+    phone: '04 90 74 00 00',
+    address: ['12 chemin des Ocres', '84400 Apt'],
+    // heures d'ouverture : 0 = dimanche … 6 = samedi ; null = fermé
+    hours: {1:[9,18], 2:[9,18], 3:[9,18], 4:[9,18], 5:[9,18], 6:[10,17], 0:null},
+    demoNotice: 'Maison fictive · site de démonstration. Aucune commande ni réservation n\'est transmise.'
+  },
+  theme: {
+    paper: '#F6F5F1', paper2: '#EBE8E0', ink: '#1D1C21', muted: '#57544D', line: '#D3CFC5', accent: '#2B3BC0',
+    fontsUrl: 'https://fonts.googleapis.com/css2?family=Archivo:ital,wdth,wght@0,62..125,100..900;1,62..125,100..900&family=Newsreader:ital,opsz,wght@0,6..72,300..700;1,6..72,300..700&display=swap',
+    fontUi: 'Archivo', fontText: 'Newsreader'
+  },
+  currency: '€',
+  unit: '100 g',
+  nav: [
+    {id:'accueil', label:'Accueil'}, {id:'pigments', label:'Pigments'}, {id:'atelier', label:'Atelier'},
+    {id:'journal', label:'Journal'}, {id:'contact', label:'Contact'}
+  ],
+  hero: {
+    word: 'TEINTE',
+    kicker: ['Pigments naturels', 'Apt, Luberon', 'Depuis 1932'],
+    title: 'Des couleurs qui sortent de la <mark>terre</mark>, pas d\'un tube.',
+    text: 'Nous extrayons, lavons et broyons à la main des ocres, des terres et des minéraux pour les peintres, les restaurateurs et les architectes.',
+    ctas: [{label:'Composer une couleur', href:'#nuancier', style:'accent'}, {label:'Voir les pigments', href:'#pigments', style:'ghost'}],
+    hint: 'Passez la main sur le mot',
+    particleColors: ['#E2B65A','#D59A2A','#C9922E','#C46A2E','#A8452B','#8E3B22','#6B5A3E','#4E3426']
+  },
+  manifesto: {
+    label: 'Ce que nous faisons',
+    text: 'Une couleur a une adresse. L\'ocre jaune vient d\'une falaise à Roussillon, la terre verte d\'une colline près de Vérone, le noir de vigne des sarments de nos voisins. Nous gardons cette adresse sur chaque pot, parce qu\'elle explique pourquoi la couleur est belle.',
+    highlights: ['adresse', 'Roussillon', 'Vérone', 'sarments'],
+    signature: 'Claire Astier, quatrième génération'
+  },
+  quarry: {
+    id: 'carriere', label: 'La carrière', title: 'Dix-huit mètres de couleur',
+    text: 'La falaise de Bruoux se lit de haut en bas comme un nuancier. Chaque couche a mis des millions d\'années à se déposer. Nous y prélevons quelques tonnes par an, à la pioche, en suivant les veines.',
+    layers: [
+      {name:'Sable blanc', hex:'#E8DCC0', depth:'0 à 2 m'},
+      {name:'Ocre jaune pâle', hex:'#E2B65A', depth:'2 à 5 m'},
+      {name:'Ocre jaune', hex:'#C9922E', depth:'5 à 8 m'},
+      {name:'Ocre orangée', hex:'#C46A2E', depth:'8 à 11 m'},
+      {name:'Ocre rouge', hex:'#A8452B', depth:'11 à 14 m'},
+      {name:'Ocre violine', hex:'#7C3A33', depth:'14 à 16 m'},
+      {name:'Argile grise', hex:'#8D8A80', depth:'16 à 18 m'}
+    ]
+  },
+  process: {
+    id: 'gestes', label: 'Du rocher au pot', title: 'Cinq gestes',
+    text: 'Entre la falaise et le pot, il y a environ huit mois et cinq opérations. Aucune ne peut être pressée.',
+    steps: [
+      {verb:'Extraire', value:'15', unit:'%', fact:'d\'ocre dans le sable', text:'Le sable ocreux ne contient qu\'environ 15 % d\'ocre. Le reste est du quartz. Il faut donc beaucoup de sable pour un peu de couleur.', colors:['#E2B65A','#C9922E'], bg:'#E2B65A', ink:'#1D1C21', tags:['Pioche','Brouette','Falaise de Bruoux']},
+      {verb:'Laver', value:'6', unit:'mois', fact:'de décantation', text:'On mélange le sable à l\'eau. Le quartz, plus lourd, tombe tout de suite. L\'ocre reste en suspension et part vers les bassins, où elle se dépose lentement au soleil.', colors:['#C9922E','#B57A2E'], bg:'#C9922E', ink:'#1D1C21', tags:['Bassins de décantation','Eau de source']},
+      {verb:'Sécher', value:'30', unit:'cm', fact:'par brique', text:'Quand la boue d\'ocre est assez ferme, on la découpe en briques à la bêche. Elles sèchent sous un hangar ouvert jusqu\'à la fin de l\'été.', colors:['#B9783A','#9C6A2A'], bg:'#9C6A2A', ink:'#FFFFFF', tags:['Bêche','Hangar','Été']},
+      {verb:'Calciner', value:'700', unit:'°C', fact:'dans le four', text:'Chauffée, l\'ocre jaune perd l\'eau contenue dans ses cristaux et devient rouge. Plus le four est chaud, plus le rouge est profond. C\'est le seul geste qui transforme la couleur.', colors:['#C9922E','#8E3B22'], bg:'#A8452B', ink:'#FFFFFF', tags:['Four à bois','Goethite → hématite']},
+      {verb:'Broyer', value:'63', unit:'µm', fact:'tamis final', text:'Les briques passent sous une meule de pierre, puis dans un tamis de 63 microns. La poudre obtenue est assez fine pour la peinture à l\'huile, la fresque ou l\'aquarelle.', colors:['#6B5A3E','#4E3426'], bg:'#1D1C21', ink:'#F6F5F1', tags:['Meule de pierre','Tamis','Pot de verre']}
+    ]
+  },
+  mixer: {
+    id: 'nuancier', label: 'Nuancier', title: 'Composez votre couleur',
+    text: 'Choisissez jusqu\'à trois pigments et dosez-les. Le mélange est calculé comme en peinture, par soustraction de la lumière : le bleu et le jaune donnent un vert sourd, pas un vert d\'écran.',
+    defaults: [{id:'ocre-jaune', w:55}, {id:'terre-verte', w:30}, {id:'blanc-meudon', w:15}],
+    repaint: 'Repeindre le site avec cette couleur'
+  },
+  stats: [
+    {value:16, suffix:'', text:'pigments, tous d\'origine connue'},
+    {value:3, suffix:'', text:'carrières exploitées à la main'},
+    {value:92, suffix:' ans', text:'de savoir-faire familial'},
+    {value:0, suffix:'', text:'liant ou charge synthétique ajouté'}
+  ],
+  families: ['Ocres', 'Terres', 'Minéraux', 'Noirs et blancs'],
+  products: [
+    {id:'ocre-jaune', name:'Ocre jaune de Roussillon', family:'Ocres', ci:'PY43', hex:'#C9922E', origin:'Roussillon, Vaucluse', price:6.5, opacity:'Couvrant', light:3, text:'Notre couleur fondatrice. Un jaune chaud et franc, qui se mélange avec tout.'},
+    {id:'ocre-rouge', name:'Ocre rouge', family:'Ocres', ci:'PR102', hex:'#A8452B', origin:'Gargas, Vaucluse', price:6.5, opacity:'Couvrant', light:3, text:'Ocre jaune calcinée à 700 °C dans notre four. Le rouge des façades provençales.'},
+    {id:'ocre-ru', name:'Ocre de ru', family:'Ocres', ci:'PY43', hex:'#9C6A2A', origin:'Puisaye, Bourgogne', price:7, opacity:'Semi-couvrant', light:3, text:'Un jaune brun, plus sourd que l\'ocre de Roussillon. Idéal pour les carnations.'},
+    {id:'jaune-mars', name:'Jaune de Mars', family:'Ocres', ci:'PY42', hex:'#D59A2A', origin:'Oxyde de fer de synthèse', price:5.5, opacity:'Couvrant', light:3, text:'La version de synthèse de l\'ocre : plus régulière, plus vive. Nous l\'indiquons clairement.'},
+    {id:'sienne-nat', name:'Terre de Sienne naturelle', family:'Terres', ci:'PBr7', hex:'#B9783A', origin:'Toscane, Italie', price:8, opacity:'Transparent', light:3, text:'Transparente et lumineuse, elle donne des glacis dorés.'},
+    {id:'sienne-br', name:'Terre de Sienne brûlée', family:'Terres', ci:'PBr7', hex:'#8E3B22', origin:'Toscane, Italie', price:8, opacity:'Transparent', light:3, text:'La Sienne naturelle passée au four. Un rouge brun chaud et profond.'},
+    {id:'ombre-nat', name:'Terre d\'ombre naturelle', family:'Terres', ci:'PBr7', hex:'#6B5A3E', origin:'Chypre', price:8.5, opacity:'Semi-couvrant', light:3, text:'Riche en manganèse, elle sèche vite. Le brun froid des dessous.'},
+    {id:'ombre-br', name:'Terre d\'ombre brûlée', family:'Terres', ci:'PBr7', hex:'#4E3426', origin:'Chypre', price:8.5, opacity:'Couvrant', light:3, text:'Le brun le plus utilisé de l\'histoire de la peinture.'},
+    {id:'terre-verte', name:'Terre verte de Vérone', family:'Terres', ci:'PG23', hex:'#6F7D5C', origin:'Monte Baldo, Vénétie', price:11, opacity:'Transparent', light:3, text:'Le vert discret des sous-couches de visages dans la peinture italienne du XIVe siècle.'},
+    {id:'rouge-pouzzoles', name:'Rouge de Pouzzoles', family:'Terres', ci:'PR102', hex:'#9C3B2F', origin:'Campanie, Italie', price:9, opacity:'Couvrant', light:3, text:'Une terre volcanique rouge, utilisée depuis l\'Antiquité dans les enduits.'},
+    {id:'outremer', name:'Bleu outremer', family:'Minéraux', ci:'PB29', hex:'#2A3BB8', origin:'Procédé Guimet, 1828', price:12, opacity:'Transparent', light:3, text:'L\'équivalent moderne du lapis-lazuli. Un bleu profond, légèrement violet.'},
+    {id:'cobalt', name:'Bleu de cobalt', family:'Minéraux', ci:'PB28', hex:'#2F5DA8', origin:'Aluminate de cobalt', price:18, opacity:'Semi-couvrant', light:3, text:'Un bleu pur et stable, sans dérive vers le violet ni le vert.'},
+    {id:'oxyde-chrome', name:'Vert oxyde de chrome', family:'Minéraux', ci:'PG17', hex:'#4E6B45', origin:'Oxyde de chrome', price:9.5, opacity:'Couvrant', light:3, text:'Un vert olive très couvrant et très solide, même à l\'extérieur.'},
+    {id:'noir-vigne', name:'Noir de vigne', family:'Noirs et blancs', ci:'PBk8', hex:'#26252A', origin:'Sarments du Luberon', price:7.5, opacity:'Couvrant', light:3, text:'Des sarments de vigne calcinés à l\'abri de l\'air. Un noir légèrement bleuté.'},
+    {id:'blanc-meudon', name:'Blanc de Meudon', family:'Noirs et blancs', ci:'PW18', hex:'#EEEBE3', origin:'Craie de Meudon', price:3.5, opacity:'Transparent à l\'huile', light:3, text:'Une craie fine. Couvrante à la colle ou à la chaux, transparente à l\'huile.'},
+    {id:'ocre-havane', name:'Ocre havane', family:'Ocres', ci:'PBr7', hex:'#8B5A3C', origin:'Rustrel, Vaucluse', price:7, opacity:'Couvrant', light:3, text:'Un brun tabac, entre l\'ocre rouge et la terre d\'ombre.'}
+  ],
+  testimonials: [
+    {quote:'J\'ai repeint la façade d\'une bastide avec leur ocre rouge et de la chaux. Trois ans après, le mur est plus beau qu\'au premier jour.', name:'Marc Delorme', role:'Façadier, Gordes', hex:'#A8452B'},
+    {quote:'Pour une restauration, je dois savoir d\'où vient le pigment. Ici, c\'est écrit sur le pot, avec l\'indice de couleur.', name:'Inès Barral', role:'Restauratrice de peintures', hex:'#2A3BB8'},
+    {quote:'Leur terre verte se glisse sous les carnations exactement comme dans les traités anciens.', name:'Tomás Ruiz', role:'Peintre, Marseille', hex:'#6F7D5C'},
+    {quote:'L\'atelier fresque m\'a appris plus en deux jours qu\'une année de tutoriels.', name:'Léa Morin', role:'Architecte d\'intérieur', hex:'#C9922E'}
+  ],
+  workshops: [
+    {id:'initiation', name:'Initiation aux ocres', duration:'3 h', weekday:6, hour:'10h', price:45, capacity:10, level:'Tous niveaux', hex:'#C9922E', text:'Visite de la carrière, lavage d\'un seau de sable ocreux, et préparation de votre première peinture à la colle.'},
+    {id:'tempera', name:'Peinture à l\'œuf', duration:'1 journée', weekday:6, hour:'9h30', price:120, capacity:8, level:'Débutant', hex:'#B9783A', text:'Broyer ses pigments, préparer une tempera au jaune d\'œuf et peindre un petit panneau de bois.'},
+    {id:'fresque', name:'Fresque à la chaux', duration:'2 jours', weekday:5, hour:'9h', price:260, capacity:6, level:'Intermédiaire', hex:'#A8452B', text:'Enduit, report du dessin et peinture sur mortier frais. Vous repartez avec un carreau de fresque.'},
+    {id:'aquarelle', name:'Aquarelle de terres', duration:'3 h', weekday:3, hour:'14h', price:55, capacity:10, level:'Tous niveaux', hex:'#6F7D5C', text:'Fabriquer ses godets d\'aquarelle avec de la gomme arabique et du miel, puis les essayer sur le motif.'}
+  ],
+  journal: [
+    {id:'ocre-rouge', title:'Pourquoi notre rouge sort d\'un four', kicker:'Chimie', date:'2026-10-14', read:'6 min', hex:'#A8452B', hex2:'#C9922E',
+     lead:'Il n\'existe presque pas d\'ocre rouge naturelle dans le Luberon. Nos rouges sont des jaunes qui ont eu chaud.',
+     body:[
+      ['p','L\'ocre jaune doit sa couleur à un minéral, la goethite : un oxyde de fer qui contient de l\'eau dans sa structure. Tant que cette eau reste prise dans le cristal, la poudre est jaune.'],
+      ['p','Dans le four, à partir de 300 °C environ, cette eau s\'échappe. La goethite se transforme en hématite, un oxyde de fer sec, qui est rouge. Le changement se voit à l\'œil nu : la poudre passe par l\'orangé avant de foncer.'],
+      ['q','Plus le four est chaud et plus la cuisson est longue, plus le rouge tire vers le violet.'],
+      ['h','Lire la température à la couleur'],
+      ['p','Nous cuisons au bois, par fournées de 80 kilos. Il n\'y a pas de thermostat : le chauffeur sort un échantillon toutes les vingt minutes et le compare à une plaque de référence peinte par son grand-père. C\'est plus lent qu\'un four électrique, mais la couleur reste la même d\'une année sur l\'autre.'],
+      ['p','La même opération donne la Terre de Sienne brûlée à partir de la Sienne naturelle, et l\'Ombre brûlée à partir de l\'Ombre naturelle. À chaque fois, le pigment perd son eau et gagne en chaleur.']
+     ]},
+    {id:'outremer', title:'Le bleu qui valait plus que l\'or', kicker:'Histoire', date:'2026-09-02', read:'5 min', hex:'#2A3BB8', hex2:'#2F5DA8',
+     lead:'Pendant des siècles, le bleu outremer venait d\'une seule vallée d\'Afghanistan. Un chimiste lyonnais a tout changé en 1828.',
+     body:[
+      ['p','Le lapis-lazuli était extrait dans les montagnes du Badakhshan, puis transporté jusqu\'à Venise. Broyé et purifié, il donnait un bleu si cher que les contrats de peintres précisaient la quantité à utiliser pour le manteau de la Vierge.'],
+      ['p','En 1824, la Société d\'encouragement pour l\'industrie nationale offre un prix de six mille francs à qui fabriquera un outremer artificiel bon marché. Jean-Baptiste Guimet, à Lyon, remporte le prix en 1828.'],
+      ['q','Le prix du bleu a été divisé par plusieurs centaines en quelques années.'],
+      ['h','Ce que nous vendons'],
+      ['p','Notre bleu outremer est fabriqué selon ce procédé, à partir de kaolin, de soufre et de carbonate de soude. Nous l\'indiquons sur le pot. Il a la même structure cristalline que le lapis, sans les impuretés grises qui rendaient le bleu naturel plus doux.']
+     ]},
+    {id:'nuancier', title:'Mélanger sans salir : cinq règles', kicker:'Pratique', date:'2026-07-21', read:'4 min', hex:'#6F7D5C', hex2:'#EEEBE3',
+     lead:'Un mélange de pigments ne se comporte pas comme un mélange de lumières. Voici ce que nous apprenons aux stagiaires dès le premier jour.',
+     body:[
+      ['p','Première règle : ne mélangez jamais plus de trois pigments. Au-delà, chaque pigment absorbe une partie de la lumière et le mélange devient gris.'],
+      ['p','Deuxième règle : commencez par le pigment le plus clair et ajoutez le plus foncé petit à petit. Une pointe d\'outremer suffit à faire basculer un pot entier d\'ocre.'],
+      ['q','Un vert fait d\'ocre et de noir de vigne est souvent plus beau qu\'un vert acheté.'],
+      ['p','Troisième règle : notez vos proportions en grammes, pas en cuillères. Quatrième règle : un pigment transparent se mélange mieux en glacis qu\'en pâte. Cinquième règle : testez toujours sur le support final, car la chaux, l\'huile et la colle ne rendent pas la même couleur.']
+     ]}
+  ],
+  faq: [
+    ['Les pigments sont-ils toxiques ?', 'Les ocres et les terres ne sont pas classées comme dangereuses. Comme pour toute poudre fine, évitez de la respirer : portez un masque lors du broyage et travaillez à l\'humide.'],
+    ['Avec quel liant les utiliser ?', 'Tous nos pigments s\'utilisent à l\'huile de lin, à l\'œuf, à la colle, à la gomme arabique et, sauf mention contraire, à la chaux.'],
+    ['Combien de temps se conservent-ils ?', 'Indéfiniment, au sec. Un pigment minéral ne vieillit pas dans son pot.'],
+    ['Livrez-vous à l\'étranger ?', 'Oui, dans toute l\'Union européenne. La livraison est offerte en France à partir de 60 €.'],
+    ['Proposez-vous des tarifs professionnels ?', 'Oui, à partir de 5 kg par référence. Écrivez-nous avec le détail de votre chantier.']
+  ],
+  shipping: {free: 60, cost: 6.9}
+};
+
+/* ==================================================================
+   2. MOTEUR  (ne pas modifier pour une simple adaptation client)
+   ================================================================== */
+(() => {
+const $ = (s, r=document) => r.querySelector(s);
+const $$ = (s, r=document) => [...r.querySelectorAll(s)];
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const fine = matchMedia('(pointer: fine)').matches;
+const B = SITE.brand;
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const money = n => n.toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2}) + ' ' + SITE.currency;
+const clamp = (v,a,b) => Math.max(a, Math.min(b, v));
+const store = {
+  get(k, d){ try { const v = localStorage.getItem('site:'+k); return v ? JSON.parse(v) : d; } catch(e){ return d; } },
+  set(k, v){ try { localStorage.setItem('site:'+k, JSON.stringify(v)); } catch(e){} }
+};
+function rng(seed){ let s = seed % 2147483647; if (s <= 0) s += 2147483646; return () => (s = s * 16807 % 2147483647) / 2147483647; }
+const hash = str => { let h = 2166136261; for (const c of str) h = Math.imul(h ^ c.charCodeAt(0), 16777619); return Math.abs(h); };
+const P = id => SITE.products.find(p => p.id === id);
+
+/* ---------- colour helpers ---------- */
+const hex2rgb = h => { h = h.replace('#',''); return [0,2,4].map(i => parseInt(h.slice(i,i+2),16)); };
+const rgb2hex = a => '#' + a.map(v => Math.round(clamp(v,0,255)).toString(16).padStart(2,'0')).join('').toUpperCase();
+const toLin = c => { c /= 255; return c <= .04045 ? c/12.92 : Math.pow((c+.055)/1.055, 2.4); };
+const toSrgb = v => { const c = v <= .0031308 ? v*12.92 : 1.055*Math.pow(v,1/2.4)-.055; return clamp(c,0,1)*255; };
+const lum = h => { const [r,g,b] = hex2rgb(h).map(toLin); return .2126*r + .7152*g + .0722*b; };
+const inkOn = h => lum(h) > .32 ? '#1D1C21' : '#FFFFFF';
+const shade = (h, k) => rgb2hex(hex2rgb(h).map(v => k < 0 ? v*(1+k) : v + (255-v)*k));
+// subtractive mix: weighted geometric mean of linear reflectance
+function mixColors(items){
+  const tot = items.reduce((s,i)=>s+i.w,0) || 1;
+  const out = [0,0,0];
+  items.forEach(({hex,w}) => hex2rgb(hex).forEach((c,ch) => out[ch] += (w/tot) * Math.log(Math.max(toLin(c), .002))));
+  return rgb2hex(out.map(v => toSrgb(Math.exp(v))));
+}
+function rgb2hsl([r,g,b]){ r/=255; g/=255; b/=255; const mx=Math.max(r,g,b), mn=Math.min(r,g,b), l=(mx+mn)/2; let h=0, s=0;
+  if (mx !== mn){ const d = mx-mn; s = l > .5 ? d/(2-mx-mn) : d/(mx+mn);
+    h = mx===r ? (g-b)/d + (g<b?6:0) : mx===g ? (b-r)/d + 2 : (r-g)/d + 4; h *= 60; }
+  return [h,s,l]; }
+function nameColor(hex){
+  const [h,s,l] = rgb2hsl(hex2rgb(hex));
+  let base;
+  if (s < .12) base = l > .8 ? 'Blanc cassé' : l < .18 ? 'Noir' : 'Gris';
+  else if (h < 15 || h >= 345) base = 'Rouge';
+  else if (h < 40) base = l < .35 ? 'Terre' : 'Ocre';
+  else if (h < 65) base = 'Jaune';
+  else if (h < 165) base = 'Vert';
+  else if (h < 200) base = 'Vert d\'eau';
+  else if (h < 255) base = 'Bleu';
+  else if (h < 295) base = 'Violet';
+  else base = 'Rose';
+  const tone = l < .2 ? ' profond' : l < .38 ? ' sombre' : l > .78 ? ' pâle' : l > .62 ? ' clair' : s < .3 ? ' sourd' : '';
+  return `${base}${tone} n° ${String(hash(hex) % 9000 + 1000)}`;
+}
+
+/* ---------- powder "photographs" generated in canvas ---------- */
+const powderCache = new Map();
+function powder(hex, mode='mound', w=560, h=420, seed=1, hex2){
+  const key = [hex,mode,w,h,seed,hex2].join('|'); if (powderCache.has(key)) return powderCache.get(key);
+  const c = document.createElement('canvas'); c.width = w; c.height = h; const x = c.getContext('2d'); const r = rng(hash(key));
+  const ground = SITE.theme.paper2;
+  if (mode === 'flat'){
+    const g = x.createLinearGradient(0,0,w,h); g.addColorStop(0, shade(hex,.12)); g.addColorStop(1, shade(hex2||hex,-.18)); x.fillStyle = g; x.fillRect(0,0,w,h);
+    for (let i=0;i<w*h/18;i++){ const v = (r()-.5)*.35; x.fillStyle = shade(r()<.5?hex:(hex2||hex), v); const s = r()*2.2+.4; x.fillRect(r()*w, r()*h, s, s); }
+    // soft light streak
+    const lg = x.createRadialGradient(w*.3,h*.25,0,w*.3,h*.25,w*.7); lg.addColorStop(0,'rgba(255,255,255,.22)'); lg.addColorStop(1,'rgba(255,255,255,0)'); x.fillStyle = lg; x.fillRect(0,0,w,h);
+  } else {
+    // table + light falloff
+    const g = x.createLinearGradient(0,0,0,h); g.addColorStop(0, shade(ground,.35)); g.addColorStop(1, shade(ground,-.08)); x.fillStyle = g; x.fillRect(0,0,w,h);
+    const cx = w*(.48 + (r()-.5)*.08), base = h*.8, mw = w*.36, mh = h*(.38 + r()*.12);
+    const top = X => base - mh*Math.exp(-Math.pow((X-cx)/(mw*.62),2));
+    // shadow
+    const sg = x.createRadialGradient(cx+mw*.25, base+6, 0, cx+mw*.25, base+6, mw*1.4); sg.addColorStop(0,'rgba(30,25,20,.35)'); sg.addColorStop(1,'rgba(30,25,20,0)'); x.fillStyle = sg; x.beginPath(); x.ellipse(cx+mw*.2, base+4, mw*1.4, h*.07, 0, 0, Math.PI*2); x.fill();
+    // mound body
+    x.beginPath(); x.moveTo(cx-mw*1.5, base); for (let X=cx-mw*1.5; X<=cx+mw*1.5; X+=3) x.lineTo(X, top(X) + (r()-.5)*1.5); x.lineTo(cx+mw*1.5, base);
+    x.quadraticCurveTo(cx, base + h*.05, cx-mw*1.5, base); x.closePath();
+    const mg = x.createLinearGradient(cx-mw, base-mh, cx+mw, base); mg.addColorStop(0, shade(hex,.18)); mg.addColorStop(.5, hex); mg.addColorStop(1, shade(hex,-.32)); x.fillStyle = mg; x.fill();
+    x.save(); x.clip();
+    for (let i=0;i<w*h/7;i++){ const X = cx + (r()-.5)*mw*3, Y = base - r()*mh*1.05; const lit = (cx - X)/(mw*3) + (base - Y)/(mh*3);
+      x.fillStyle = shade(hex, (r()-.5)*.28 + lit*.25); const s = r()*1.8+.5; x.fillRect(X, Y, s, s); }
+    x.restore();
+    // loose grains around
+    for (let i=0;i<900;i++){ const a = r()*Math.PI*2, d = mw*(1.1 + Math.pow(r(),2)*1.2); const X = cx + Math.cos(a)*d, Y = base + Math.sin(a)*d*.12; x.fillStyle = shade(hex,(r()-.5)*.3); x.globalAlpha = .4 + r()*.5; const s = r()*1.6+.4; x.fillRect(X,Y,s,s); }
+    x.globalAlpha = 1;
+  }
+  // film grain
+  const id = x.getImageData(0,0,w,h), d = id.data; for (let i=0;i<d.length;i+=4){ const n = (r()-.5)*14; d[i]+=n; d[i+1]+=n; d[i+2]+=n; } x.putImageData(id,0,0);
+  const url = c.toDataURL('image/jpeg', .86); powderCache.set(key, url); return url;
+}
+
+/* ---------- theme ---------- */
+const root = document.documentElement.style;
+function applyTheme(){
+  const t = SITE.theme;
+  root.setProperty('--paper', t.paper); root.setProperty('--paper-2', t.paper2); root.setProperty('--ink', t.ink);
+  root.setProperty('--muted', t.muted); root.setProperty('--line', t.line);
+  root.setProperty('--f-ui', `"${t.fontUi}","Helvetica Neue",Arial,sans-serif`); root.setProperty('--f-text', `"${t.fontText}",Georgia,"Times New Roman",serif`);
+  const fl = $('#fontlink'); if (t.fontsUrl && fl.href !== t.fontsUrl) fl.href = t.fontsUrl;
+  setAccent(store.get('accent', t.accent), false);
+}
+let accent = SITE.theme.accent;
+function setAccent(hex, save=true){ accent = hex; root.setProperty('--accent', hex); root.setProperty('--accent-ink', inkOn(hex)); if (save) store.set('accent', hex); }
+
+/* ---------- header, menu, footer ---------- */
+function openState(){
+  const d = new Date(), h = B.hours[d.getDay()], t = d.getHours() + d.getMinutes()/60;
+  if (h && t >= h[0] && t < h[1]) return {open:true, text:`Atelier ouvert · ferme à ${h[1]} h`};
+  for (let k=0;k<8;k++){ const dd = (d.getDay()+k)%7, hh = B.hours[dd]; if (!hh) continue; if (k===0 && t < hh[0]) return {open:false, text:`Fermé · ouvre à ${hh[0]} h`};
+    if (k>0) return {open:false, text:`Fermé · ouvre ${k===1?'demain':['dimanche','lundi','mardi','mercredi','jeudi','vendredi','samedi'][dd]} à ${hh[0]} h`}; }
+  return {open:false, text:'Fermé'};
+}
+function renderHeader(){
+  const st = openState();
+  $('#hd').innerHTML = `<div class="wrap">
+    <a class="logo" href="#accueil" aria-label="${esc(B.name)}, accueil"><i></i>${esc(B.name)}</a>
+    <span class="status ${st.open?'':'closed'}" id="status"><b></b>${esc(st.text)}</span>
+    <nav class="nav" aria-label="Principale">${SITE.nav.map(n=>`<a href="#${n.id}" data-nav="${n.id}">${esc(n.label)}</a>`).join('')}</nav>
+    <button class="cartbtn" id="cartBtn" type="button" aria-label="Ouvrir le panier">Panier <span class="n tnum" id="cartN">0</span></button>
+    <button class="burger" id="burger" type="button" aria-expanded="false" aria-controls="menu">Menu</button>
+  </div>`;
+  $('#menu').innerHTML = `<div class="menu-top"><span class="logo">${esc(B.name)}</span><button type="button" id="menuClose">Fermer</button></div>
+    <nav aria-label="Menu mobile">${SITE.nav.map(n=>`<a href="#${n.id}">${esc(n.label)}</a>`).join('')}</nav>
+    <div class="menu-foot"><span>${esc(st.text)}</span><span>${esc(B.address.join(', '))}</span></div>`;
+  $('#burger').onclick = () => { $('#menu').hidden = false; document.body.classList.add('lock'); $('#burger').setAttribute('aria-expanded','true'); $('#menuClose').focus(); };
+  const closeMenu = () => { $('#menu').hidden = true; document.body.classList.remove('lock'); $('#burger').setAttribute('aria-expanded','false'); };
+  $('#menuClose').onclick = closeMenu; $$('#menu nav a').forEach(a => a.addEventListener('click', closeMenu));
+  $('#cartBtn').onclick = () => openDrawer('cart');
+}
+function renderFooter(){
+  const cols = SITE.hero.particleColors;
+  $('#ft').innerHTML = `<div class="wrap">
+    <div class="ft-grid">
+      <div><h3>La lettre</h3><p>Une lettre par saison : nouveaux pigments, dates d'ateliers, coulisses de la carrière.</p>
+        <form class="news" id="news" novalidate><label for="newsMail" class="skip">Adresse e-mail</label><input id="newsMail" type="email" placeholder="votre@adresse.fr" autocomplete="email"><button type="submit">S'inscrire</button></form>
+        <div class="msg" id="newsMsg" aria-live="polite"></div></div>
+      <div><h3>Pages</h3><ul>${SITE.nav.map(n=>`<li><a href="#${n.id}">${esc(n.label)}</a></li>`).join('')}</ul></div>
+      <div><h3>Visiter</h3><ul>${B.address.map(a=>`<li>${esc(a)}</li>`).join('')}<li>${esc(openState().text)}</li></ul></div>
+      <div><h3>Écrire</h3><ul><li>${esc(B.email)}</li><li>${esc(B.phone)}</li></ul></div>
+    </div>
+    <div class="giant" aria-hidden="true">${[...SITE.hero.word].map(l=>`<span>${esc(l)}</span>`).join('')}</div>
+    <div class="legal"><span>© ${new Date().getFullYear()} ${esc(B.legal)}</span><span>${esc(B.demoNotice)}</span></div></div>`;
+  $$('.giant span').forEach((s,i) => s.addEventListener('pointerenter', () => { s.style.color = cols[(i + Math.floor(Math.random()*cols.length)) % cols.length]; }));
+  $('#news').addEventListener('submit', e => { e.preventDefault(); const v = $('#newsMail').value.trim();
+    $('#newsMsg').textContent = /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v) ? 'Adresse notée. Ceci est une démonstration : aucune lettre ne sera envoyée.' : 'Saisissez une adresse e-mail complète, par exemple nom@domaine.fr.'; });
+}
+
+/* ---------- views ---------- */
+const views = $('#views');
+function section(id, html){ const s = document.createElement('section'); s.className = 'view'; s.dataset.view = id; s.hidden = true; s.innerHTML = html; views.append(s); return s; }
+function cardHTML(p){ return `<button class="pcard" type="button" data-pig="${p.id}">
+  <div class="img"><img alt="Poudre de ${esc(p.name)}" src="${powder(p.hex,'mound',560,420,1)}" loading="lazy"><span class="ci">${esc(p.ci)}</span></div>
+  <div class="row"><h3>${esc(p.name)}</h3><span class="price tnum">${money(p.price)}</span></div>
+  <span class="sub">${esc(p.origin)} · ${esc(SITE.unit)}</span></button>`; }
+const dayPig = SITE.products[Math.floor(Date.now()/864e5) % SITE.products.length];
+
+function renderHome(){
+  const H = SITE.hero, M = SITE.manifesto, Q = SITE.quarry, PR = SITE.process, MX = SITE.mixer;
+  let words = esc(M.text).split(/(\s+)/).map(w => /^\s+$/.test(w) || !w ? w : `<span>${M.highlights.some(h=>w.includes(h)) ? `<mark>${w}</mark>` : w}</span>`).join('');
+  section('accueil', `
+  <div class="hero wrap">
+    <div class="hero-top label">${H.kicker.map(k=>`<span>${esc(k)}</span>`).join('')}</div>
+    <div class="wordmark"><canvas id="heroCv" role="img" aria-label="${esc(B.name)}, mot composé de grains de pigment"></canvas><span class="hint">${esc(H.hint)}</span></div>
+    <div class="hero-grid">
+      <h1>${H.title}</h1>
+      <div><p class="prose">${esc(H.text)}</p><div class="ctas">${H.ctas.map(c=>`<a class="btn ${c.style}" href="${c.href}">${esc(c.label)} <span class="arr">→</span></a>`).join('')}</div></div>
+      <button class="daycard" type="button" data-pig="${dayPig.id}"><img alt="" src="${powder(dayPig.hex,'mound',300,300,2)}"><span><span class="label">Pigment du jour</span><strong>${esc(dayPig.name)}</strong><span class="muted">${esc(dayPig.ci)} · ${esc(dayPig.origin)}</span></span></button>
+    </div>
+  </div>
+  <div class="manif"><div class="wrap"><span class="label">${esc(M.label)}</span><p class="big" id="manifText">${words}</p><div class="sig"><span class="dot" style="background:var(--accent);width:34px;height:34px"></span><span>${esc(M.signature)}</span></div></div></div>
+  <div class="quarry" id="${Q.id}"><div class="wrap"><div class="sec-head"><div><span class="label">${esc(Q.label)}</span><h2>${esc(Q.title)}</h2></div><p class="prose">${esc(Q.text)}</p></div></div>
+    <div class="strata-box"><canvas id="strataCv" role="img" aria-label="Coupe de la falaise d'ocre, couches de couleur superposées"></canvas></div>
+    <div class="wrap"><div class="legend">${Q.layers.map(l=>`<span><i class="dot" style="background:${l.hex}"></i>${esc(l.name)} <small>${esc(l.depth)}</small></span>`).join('')}</div></div></div>
+  <div class="steps" id="${PR.id}"><div class="wrap"><div class="sec-head"><div><span class="label">${esc(PR.label)}</span><h2>${esc(PR.title)}</h2></div><p class="prose">${esc(PR.text)}</p></div>
+    <div class="stack" id="stack">${PR.steps.map((s,i)=>`
+      <article class="card" style="--i:${i};--c-bg:${s.bg};--c-ink:${s.ink}">
+        <div class="left"><div><span class="label">Geste ${i+1} sur ${PR.steps.length}</span><h3>${esc(s.verb)}</h3><p class="prose">${esc(s.text)}</p></div>
+          <div><div class="num tnum">${esc(s.value)}<small>${esc(s.unit)}</small></div><div style="margin-top:8px;font-weight:600">${esc(s.fact)}</div>
+          <div class="meta" style="margin-top:18px">${s.tags.map(t=>`<span>${esc(t)}</span>`).join('')}</div></div></div>
+        <div class="pic" style="background-image:url(${powder(s.colors[0], i%2 ? 'flat':'mound', 720, 540, i+10, s.colors[1])})" role="img" aria-label="${esc(s.verb)} : matière ${esc(s.fact)}"></div>
+      </article>`).join('')}</div></div></div>
+  <div class="mixer" id="${MX.id}"><div class="wrap"><div class="sec-head"><div><span class="label">${esc(MX.label)}</span><h2>${esc(MX.title)}</h2></div><p class="prose">${esc(MX.text)}</p></div>
+    <div class="mix-grid">
+      <div><div class="pot-wrap"><canvas id="potCv" role="img" aria-label="Pot de mélange"></canvas></div>
+        <div class="result"><div class="name" id="mixName">…</div><div class="recipe" id="mixRecipe"></div><div class="tnum muted" id="mixHex"></div>
+        <div class="actions"><button class="btn accent" id="repaint" type="button">${esc(MX.repaint)}</button><button class="btn ghost small" id="mixCopy" type="button">Copier le code couleur</button><button class="btn ghost small" id="mixBuy" type="button">Commander ces pigments</button><button class="btn ghost small" id="resetAccent" type="button">Couleur d'origine</button></div></div></div>
+      <div><span class="label">Pigments disponibles · 3 au maximum</span><div class="palette" id="palette">${SITE.products.map(p=>`<button class="chip" type="button" data-mix="${p.id}" aria-pressed="false"><i class="dot" style="background:${p.hex}"></i>${esc(p.name)}</button>`).join('')}</div>
+        <div class="sliders" id="sliders"></div></div>
+    </div></div></div>
+  <div class="stats"><div class="wrap stats-grid">${SITE.stats.map((s,i)=>`<div class="stat"><strong class="tnum" data-count="${s.value}" data-suffix="${esc(s.suffix)}">${s.value}${esc(s.suffix)}</strong><span>${esc(s.text)}</span></div>`).join('')}</div></div>
+  <div class="feat"><div class="wrap"><div class="sec-head"><div><span class="label">Le catalogue</span><h2>Quatre pigments pour commencer</h2></div><div><p class="prose">Les quatre couleurs qui suffisent à peindre presque tout : un jaune, un rouge, une terre, un bleu.</p><a class="btn ghost" href="#pigments" style="margin-top:20px">Les ${SITE.products.length} pigments <span class="arr">→</span></a></div></div>
+    <div class="grid-p">${['ocre-jaune','ocre-rouge','ombre-br','outremer'].map(id=>cardHTML(P(id))).join('')}</div></div></div>
+  <div class="voices"><div class="wrap"><div class="sec-head"><div><span class="label">Ils peignent avec</span><h2>Ce qu'on en dit</h2></div><p class="prose" style="color:inherit;opacity:.8">Peintres, façadiers, restaurateurs : ceux qui utilisent nos pigments tous les jours.</p></div>
+    <div class="rail">${SITE.testimonials.map(t=>`<figure><blockquote>« ${esc(t.quote)} »</blockquote><figcaption><span class="dot" style="background:${t.hex}"></span><span><b>${esc(t.name)}</b><small>${esc(t.role)}</small></span></figcaption></figure>`).join('')}</div></div></div>
+  <div class="band"><div class="wrap band-in"><h2>Venez broyer vos couleurs avec nous.</h2><div><p class="prose" style="color:inherit">Quatre ateliers, de trois heures à deux jours, dans la carrière et dans l'atelier.</p><a class="btn" href="#atelier" style="margin-top:20px">Voir les ateliers <span class="arr">→</span></a></div></div></div>
+  `);
+}
+
+let pigFilter = 'Tous', pigQuery = '', pigSort = 'famille';
+function renderPigments(){
+  section('pigments', `<div class="wrap"><div class="phead"><div class="crumbs label">Catalogue</div><h1>Pigments</h1><p class="prose">${SITE.products.length} pigments en poudre, vendus par ${esc(SITE.unit)}. Chaque fiche donne l'origine, l'indice de couleur international (Colour Index) et le comportement dans les principaux liants.</p></div>
+    <div class="toolbar"><div class="filters" id="filters">${['Tous',...SITE.families].map(f=>`<button class="chip" type="button" data-fam="${esc(f)}" aria-pressed="${f===pigFilter}">${esc(f)}</button>`).join('')}</div>
+      <div class="search"><label for="pigQ" class="skip">Rechercher un pigment</label><input id="pigQ" type="search" placeholder="Rechercher : ocre, PB29, Toscane…"><label for="pigSort" class="skip">Trier</label><select id="pigSort"><option value="famille">Par famille</option><option value="prix">Prix croissant</option><option value="nom">Nom</option></select></div></div>
+    <p class="count" id="pigCount"></p>
+    <div class="grid-p" id="pigGrid" style="margin-top:16px;padding-bottom:clamp(80px,10vw,140px)"></div></div>`);
+  const draw = () => {
+    let list = SITE.products.filter(p => (pigFilter==='Tous' || p.family===pigFilter) && (`${p.name} ${p.ci} ${p.origin} ${p.family}`.toLowerCase().includes(pigQuery.toLowerCase())));
+    if (pigSort==='prix') list.sort((a,b)=>a.price-b.price); else if (pigSort==='nom') list.sort((a,b)=>a.name.localeCompare(b.name,'fr')); else list.sort((a,b)=>SITE.families.indexOf(a.family)-SITE.families.indexOf(b.family));
+    $('#pigGrid').innerHTML = list.length ? list.map(cardHTML).join('') : `<p class="empty">Aucun pigment ne correspond à « ${esc(pigQuery)} ». Essayez un nom de couleur, un indice comme PBr7 ou une région.</p>`;
+    $('#pigCount').textContent = `${list.length} pigment${list.length>1?'s':''}`;
+  };
+  $('#filters').addEventListener('click', e => { const b = e.target.closest('[data-fam]'); if(!b) return; pigFilter = b.dataset.fam; $$('#filters .chip').forEach(c=>c.setAttribute('aria-pressed', c===b)); draw(); });
+  $('#pigQ').addEventListener('input', e => { pigQuery = e.target.value; draw(); });
+  $('#pigSort').addEventListener('change', e => { pigSort = e.target.value; draw(); });
+  draw();
+}
+
+/* ---------- atelier & booking ---------- */
+const bk = {ws:null, session:null, people:1, step:1, name:'', email:''};
+function sessionsFor(w){
+  const out = [], d = new Date(); d.setHours(12,0,0,0); d.setDate(d.getDate()+2);
+  while (out.length < 4){ if (d.getDay() === w.weekday){ const seed = hash(w.id + d.toDateString()); const left = Math.max(0, (seed % (w.capacity + 2)) - 1); out.push({date:new Date(d), left}); } d.setDate(d.getDate()+1); }
+  return out;
+}
+function renderAtelier(){
+  section('atelier', `<div class="wrap"><div class="phead"><div class="crumbs label">Ateliers</div><h1>Atelier</h1><p class="prose">Des stages en petit groupe, dans la carrière et dans l'atelier. Le matériel, les pigments et le repas du midi sont compris.</p></div>
+    <div class="booking"><div class="ws-list" id="wsList">${SITE.workshops.map(w=>`
+      <button class="ws" type="button" data-ws="${w.id}" aria-pressed="false"><img alt="" src="${powder(w.hex,'flat',280,210,3,shade(w.hex,-.3))}">
+        <div><h3>${esc(w.name)}</h3><p class="muted" style="margin-top:6px">${esc(w.text)}</p><div class="info"><span>${esc(w.duration)}</span><span>${esc(w.level)}</span><span>${w.capacity} places</span></div></div>
+        <span class="price tnum">${money(w.price)}</span></button>`).join('')}</div>
+      <div class="panel" id="panel" aria-live="polite"></div></div></div>`);
+  $('#wsList').addEventListener('click', e => { const b = e.target.closest('[data-ws]'); if(!b) return; bk.ws = b.dataset.ws; bk.session = null; bk.step = 1; $$('#wsList .ws').forEach(x=>x.setAttribute('aria-pressed', x===b)); drawPanel(); if (innerWidth < 1080) $('#panel').scrollIntoView({behavior: reduce?'auto':'smooth', block:'start'}); });
+  drawPanel();
+}
+function drawPanel(){
+  const p = $('#panel'), w = SITE.workshops.find(x=>x.id===bk.ws);
+  const nav = `<div class="steps-nav">${['Date','Participants','Coordonnées'].map((s,i)=>`<span class="${bk.step===i+1?'on':''}">${i+1}. ${s}</span>`).join('')}</div>`;
+  if (!w){ p.innerHTML = `<h2 style="font-size:1.6rem;font-stretch:112%">Réserver un atelier</h2><p class="muted" style="margin-top:10px">Choisissez un atelier dans la liste pour voir les prochaines dates et les places restantes.</p>`; return; }
+  const ses = sessionsFor(w);
+  const sumHTML = () => `<div class="sum"><div><span>${esc(w.name)}</span><span class="tnum">${money(w.price)} × ${bk.people}</span></div>${bk.session!=null?`<div><span>Date</span><span>${cap(ses[bk.session].date.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'}))}, ${esc(w.hour)}</span></div>`:''}<div class="tot"><span>Total</span><span class="tnum">${money(w.price*bk.people)}</span></div></div>`;
+  if (bk.step === 1){
+    p.innerHTML = `${nav}<h2 style="font-size:1.6rem;font-stretch:112%;margin-bottom:16px">${esc(w.name)}</h2><div class="sessions">${ses.map((s,i)=>`<button class="session" type="button" data-s="${i}" aria-pressed="${bk.session===i}" ${s.left?'':'disabled'}><b>${cap(s.date.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'}))} · ${esc(w.hour)}</b><small>${s.left ? `${s.left} place${s.left>1?'s':''}` : 'Complet'}</small></button>`).join('')}</div>${sumHTML()}<div style="margin-top:18px"><button class="btn accent" id="next" type="button" ${bk.session==null?'disabled':''}>Continuer <span class="arr">→</span></button></div>`;
+    $$('.session',p).forEach(b=>b.onclick=()=>{ bk.session = +b.dataset.s; bk.people = Math.min(bk.people, ses[bk.session].left); drawPanel(); });
+    $('#next').onclick = () => { bk.step = 2; drawPanel(); };
+  } else if (bk.step === 2){
+    const max = ses[bk.session].left;
+    p.innerHTML = `${nav}<h2 style="font-size:1.6rem;font-stretch:112%;margin-bottom:16px">Combien de participants ?</h2><div class="stepper"><button type="button" id="minus" aria-label="Retirer un participant">−</button><output id="ppl" class="tnum">${bk.people}</output><button type="button" id="plus" aria-label="Ajouter un participant">+</button><span class="muted">${max} place${max>1?'s':''} restante${max>1?'s':''}</span></div>${sumHTML()}<div style="margin-top:18px;display:flex;gap:10px;flex-wrap:wrap"><button class="btn ghost" id="back" type="button">Retour</button><button class="btn accent" id="next" type="button">Continuer <span class="arr">→</span></button></div>`;
+    $('#minus').onclick = () => { bk.people = Math.max(1, bk.people-1); drawPanel(); };
+    $('#plus').onclick = () => { bk.people = Math.min(max, bk.people+1); drawPanel(); };
+    $('#back').onclick = () => { bk.step = 1; drawPanel(); }; $('#next').onclick = () => { bk.step = 3; drawPanel(); };
+  } else if (bk.step === 3){
+    p.innerHTML = `${nav}<form class="form" id="bkForm" novalidate><div class="field"><label for="bkName">Nom et prénom</label><input id="bkName" autocomplete="name" value="${esc(bk.name)}"><span class="err" id="eName"></span></div>
+      <div class="field"><label for="bkMail">E-mail</label><input id="bkMail" type="email" autocomplete="email" value="${esc(bk.email)}"><span class="err" id="eMail"></span></div>
+      ${sumHTML()}<p class="note">${esc(B.demoNotice)}</p><div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn ghost" id="back" type="button">Retour</button><button class="btn accent" type="submit">Réserver ${bk.people} place${bk.people>1?'s':''}</button></div></form>`;
+    $('#back').onclick = () => { bk.step = 2; drawPanel(); };
+    $('#bkForm').onsubmit = e => { e.preventDefault(); bk.name = $('#bkName').value.trim(); bk.email = $('#bkMail').value.trim(); let ok = true;
+      $('#eName').textContent = bk.name.length < 2 ? 'Indiquez votre nom pour la liste des participants.' : ''; if (bk.name.length < 2) ok = false;
+      const okMail = /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(bk.email); $('#eMail').textContent = okMail ? '' : 'Saisissez une adresse e-mail complète, par exemple nom@domaine.fr.'; if (!okMail) ok = false;
+      if (ok){ bk.step = 4; drawPanel(); } };
+  } else {
+    const s = ses[bk.session]; const ref = `${B.name.slice(0,3).toUpperCase()}-${String(s.date.getDate()).padStart(2,'0')}${String(s.date.getMonth()+1).padStart(2,'0')}-${hash(bk.email)%900+100}`;
+    p.innerHTML = `<div class="done"><span class="label" style="color:var(--accent)">Demande prête</span><div class="ref">${ref}</div><p>${esc(bk.name)}, votre demande pour <b>${esc(w.name)}</b> le <b style="text-transform:none">${s.date.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'})}</b> à ${esc(w.hour)}, pour ${bk.people} personne${bk.people>1?'s':''}, est enregistrée sur cette page.</p>${sumHTML()}<p class="note">${esc(B.demoNotice)}</p><button class="btn ghost" id="again" type="button">Nouvelle réservation</button></div>`;
+    $('#again').onclick = () => { Object.assign(bk,{ws:null,session:null,people:1,step:1}); $$('#wsList .ws').forEach(x=>x.setAttribute('aria-pressed','false')); drawPanel(); };
+  }
+}
+
+/* ---------- journal ---------- */
+const cap = t => t.charAt(0).toUpperCase() + t.slice(1);
+const fmtDate = d => new Date(d).toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'});
+function renderJournal(){
+  section('journal', `<div class="wrap"><div class="phead"><div class="crumbs label">Journal</div><h1>Journal</h1><p class="prose">Histoire des couleurs, chimie de l'atelier et conseils pratiques.</p></div>
+    <div class="jgrid">${SITE.journal.map((a,i)=>`<a class="jcard" href="#lire-${a.id}"><div class="img"><img alt="" src="${powder(a.hex, i===0?'mound':'flat', 900, 680, 7+i, a.hex2)}" loading="lazy"></div>
+      <span class="label muted">${esc(a.kicker)} · ${fmtDate(a.date)} · ${esc(a.read)}</span><h3>${esc(a.title)}</h3><p>${esc(a.lead)}</p></a>`).join('')}</div></div>`);
+  section('article', '');
+}
+function renderArticle(id){
+  const a = SITE.journal.find(x=>x.id===id) || SITE.journal[0]; const v = $('[data-view="article"]');
+  const idx = SITE.journal.indexOf(a), next = SITE.journal[(idx+1)%SITE.journal.length];
+  let first = true;
+  v.innerHTML = `<article class="wrap article"><div class="phead" style="padding-bottom:0"><a class="crumbs label" href="#journal" style="display:inline-block;text-decoration:none">← Journal · ${esc(a.kicker)}</a><h1>${esc(a.title)}</h1><p class="lead">${esc(a.lead)}</p><p class="muted" style="margin-top:18px">${fmtDate(a.date)} · ${esc(a.read)} de lecture</p></div>
+    <div class="cover"><img alt="" src="${powder(a.hex,'flat',1400,600,21,a.hex2)}"></div>
+    <div class="body">${a.body.map(([t,txt])=>{ if (t==='p'){ const c = first ? ' class="first"' : ''; first = false; return `<p${c}>${esc(txt)}</p>`; } if (t==='q') return `<blockquote>${esc(txt)}</blockquote>`; return `<h2>${esc(txt)}</h2>`; }).join('')}
+      <a class="jcard" href="#lire-${next.id}" style="margin-top:40px;border-top:1.5px solid var(--ink);padding-top:22px"><span class="label muted">Article suivant</span><h3>${esc(next.title)} →</h3></a></div></article>`;
+}
+
+/* ---------- contact ---------- */
+function renderContact(){
+  const days = ['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'], today = new Date().getDay();
+  section('contact', `<div class="wrap"><div class="phead"><div class="crumbs label">Contact</div><h1>Contact</h1><p class="prose">Une question sur un pigment, un chantier, un atelier ? Nous répondons sous deux jours ouvrés.</p></div>
+    <div class="contact"><div class="infos">
+      <div><h3>Adresse</h3><p class="big">${B.address.map(esc).join('<br>')}</p></div>
+      <div><h3>Écrire ou appeler</h3><div class="copy"><span class="big" id="cMail">${esc(B.email)}</span><button type="button" data-copy="${esc(B.email)}">Copier</button></div><div class="copy" style="margin-top:6px"><span class="big tnum">${esc(B.phone)}</span><button type="button" data-copy="${esc(B.phone)}">Copier</button></div></div>
+      <div><h3>Horaires</h3><div class="hours">${[1,2,3,4,5,6,0].map(d=>`<div class="${d===today?'today':''}"><span>${days[d]}</span><span class="tnum">${B.hours[d] ? `${B.hours[d][0]} h – ${B.hours[d][1]} h` : 'Fermé'}</span></div>`).join('')}</div></div>
+      <div><h3>Questions fréquentes</h3><div class="faq">${SITE.faq.map(([q,a])=>`<details><summary>${esc(q)}</summary><p>${esc(a)}</p></details>`).join('')}</div></div>
+    </div>
+    <form class="form panel" id="cForm" novalidate style="position:static">
+      <h2 style="font-size:1.8rem;font-stretch:112%">Écrire à l'atelier</h2>
+      <div class="field"><label for="cName">Nom</label><input id="cName" autocomplete="name"><span class="err" id="ecName"></span></div>
+      <div class="field"><label for="cEmail">E-mail</label><input id="cEmail" type="email" autocomplete="email"><span class="err" id="ecEmail"></span></div>
+      <div class="field"><label for="cTopic">Sujet</label><select id="cTopic"><option>Question sur un pigment</option><option>Chantier ou tarif professionnel</option><option>Atelier ou groupe</option><option>Autre</option></select></div>
+      <div class="field"><label for="cMsg">Message</label><textarea id="cMsg" rows="6"></textarea><span class="err" id="ecMsg"></span></div>
+      <p class="note">${esc(B.demoNotice)}</p>
+      <div><button class="btn accent" type="submit">Envoyer le message</button></div>
+      <p id="cDone" class="note" aria-live="polite" style="font-weight:700;color:var(--ink)"></p>
+    </form></div></div>`);
+  $$('[data-copy]').forEach(b => b.onclick = () => { const t = b.dataset.copy;
+    (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).then(()=>toast(`${t} copié`)).catch(()=>{ const s = getSelection(), r = document.createRange(); r.selectNodeContents(b.previousElementSibling); s.removeAllRanges(); s.addRange(r); toast('Texte sélectionné, copiez-le avec Ctrl+C'); }); });
+  $('#cForm').onsubmit = e => { e.preventDefault(); const n=$('#cName').value.trim(), m=$('#cEmail').value.trim(), t=$('#cMsg').value.trim(); let ok = true;
+    $('#ecName').textContent = n ? '' : 'Indiquez votre nom.'; if(!n) ok=false;
+    const okM = /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(m); $('#ecEmail').textContent = okM ? '' : 'Saisissez une adresse e-mail complète, par exemple nom@domaine.fr.'; if(!okM) ok=false;
+    $('#ecMsg').textContent = t.length >= 10 ? '' : 'Écrivez au moins quelques mots (10 caractères).'; if (t.length < 10) ok=false;
+    $('#cDone').textContent = ok ? `Message prêt, ${n}. Sur ce site de démonstration, il n'est pas transmis.` : ''; };
+}
+
+/* ---------- cart ---------- */
+let cart = store.get('cart', {});
+function cartCount(){ return Object.values(cart).reduce((a,b)=>a+b,0); }
+function addToCart(id, q=1, silent){ cart[id] = (cart[id]||0) + q; store.set('cart', cart); updateCartBadge(); if (!silent) toast(`${P(id).name} ajouté au panier`); if ($('#cartDrawer').classList.contains('open')) drawCart(); }
+function updateCartBadge(){ const b = $('#cartBtn'); $('#cartN').textContent = cartCount(); b.classList.remove('bump'); void b.offsetWidth; b.classList.add('bump'); }
+function drawCart(){
+  const d = $('#cartDrawer'), ids = Object.keys(cart).filter(id=>cart[id]>0 && P(id));
+  const sub = ids.reduce((s,id)=>s + P(id).price*cart[id], 0), free = SITE.shipping.free, ship = sub === 0 || sub >= free ? 0 : SITE.shipping.cost;
+  d.innerHTML = `<div class="drawer-hd"><h2>Panier</h2><button class="x" type="button" data-close>Fermer</button></div>
+    <div class="drawer-body">${ids.length ? ids.map(id=>{ const p = P(id); return `<div class="line"><img alt="" src="${powder(p.hex,'mound',300,300,2)}"><div><b>${esc(p.name)}</b><div class="muted" style="font-size:.88rem">${esc(p.ci)} · ${esc(SITE.unit)}</div>
+      <div class="q"><button type="button" data-q="${id}" data-d="-1" aria-label="Retirer ${esc(SITE.unit)}">−</button><span class="tnum">${cart[id]}</span><button type="button" data-q="${id}" data-d="1" aria-label="Ajouter ${esc(SITE.unit)}">+</button><button class="rm" type="button" data-rm="${id}">Retirer</button></div></div><b class="tnum">${money(p.price*cart[id])}</b></div>`; }).join('')
+      : `<p class="empty">Votre panier est vide.<br><a href="#pigments" data-close>Parcourir les pigments</a></p>`}</div>
+    ${ids.length ? `<div class="drawer-ft"><div class="note">${sub >= free ? 'Livraison offerte.' : `Plus que ${money(free-sub)} pour la livraison offerte.`}</div><div class="ship"><i style="width:${clamp(sub/free*100,0,100)}%"></i></div>
+      <div class="sum" style="border:0;padding:0"><div><span>Sous-total</span><span class="tnum">${money(sub)}</span></div><div><span>Livraison</span><span class="tnum">${ship ? money(ship) : 'Offerte'}</span></div><div class="tot"><span>Total</span><span class="tnum">${money(sub+ship)}</span></div></div>
+      <button class="btn accent" type="button" id="checkout" style="justify-content:center">Valider la commande</button><p class="note" id="coNote"></p></div>` : ''}`;
+  $$('[data-q]',d).forEach(b=>b.onclick=()=>{ const id=b.dataset.q; cart[id]=Math.max(0,cart[id]+ +b.dataset.d); if(!cart[id]) delete cart[id]; store.set('cart',cart); updateCartBadge(); drawCart(); });
+  $$('[data-rm]',d).forEach(b=>b.onclick=()=>{ delete cart[b.dataset.rm]; store.set('cart',cart); updateCartBadge(); drawCart(); });
+  const co = $('#checkout',d); if (co) co.onclick = () => { $('#coNote').textContent = B.demoNotice; };
+}
+function drawPig(id){
+  const p = P(id), d = $('#pigDrawer'); const stars = '●'.repeat(p.light) + '○'.repeat(3-p.light);
+  d.innerHTML = `<div class="drawer-hd"><span class="label muted">${esc(p.family)}</span><button class="x" type="button" data-close>Fermer</button></div>
+    <div class="drawer-body pd"><div class="pd-img"><img alt="Poudre de ${esc(p.name)}" src="${powder(p.hex,'mound',800,600,5)}"></div>
+      <h3>${esc(p.name)}</h3><p class="prose" style="font-size:1.1rem">${esc(p.text)}</p>
+      <dl class="specs"><div><dt>Colour Index</dt><dd>${esc(p.ci)}</dd></div><div><dt>Origine</dt><dd>${esc(p.origin)}</dd></div><div><dt>Opacité</dt><dd>${esc(p.opacity)}</dd></div><div><dt>Tenue à la lumière</dt><dd aria-label="${p.light} sur 3">${stars}</dd></div><div><dt>Code couleur</dt><dd class="tnum">${esc(p.hex)}</dd></div><div><dt>Conditionnement</dt><dd>${esc(SITE.unit)}</dd></div></dl></div>
+    <div class="drawer-ft"><div style="display:flex;justify-content:space-between;align-items:baseline"><span class="muted">Prix pour ${esc(SITE.unit)}</span><b style="font-size:1.5rem" class="tnum">${money(p.price)}</b></div>
+      <button class="btn accent" type="button" id="pdAdd" style="justify-content:center">Ajouter au panier</button><button class="btn ghost" type="button" id="pdMix" style="justify-content:center">Essayer dans le nuancier</button></div>`;
+  $('#pdAdd').onclick = () => addToCart(id);
+  $('#pdMix').onclick = () => { closeDrawers(); if (!mixSel.find(m=>m.id===id)){ if (mixSel.length>=3) mixSel.shift(); mixSel.push({id, w:40}); } syncMixer(); location.hash = '#' + SITE.mixer.id; };
+}
+let lastFocus = null;
+function openDrawer(kind, id){
+  closeDrawers(true); lastFocus = document.activeElement;
+  const d = kind==='cart' ? $('#cartDrawer') : $('#pigDrawer'); kind==='cart' ? drawCart() : drawPig(id);
+  d.inert = false; d.classList.add('open'); $('#scrim').classList.add('on'); document.body.classList.add('lock');
+  setTimeout(()=>{ const f = $('[data-close]', d); f && f.focus(); }, 60);
+}
+function closeDrawers(silent){ $$('.drawer').forEach(d=>{ d.classList.remove('open'); d.inert = true; }); $('#scrim').classList.remove('on'); document.body.classList.remove('lock'); if (!silent && lastFocus && lastFocus.focus) lastFocus.focus(); }
+document.addEventListener('click', e => {
+  if (e.target.closest('[data-close]')) { closeDrawers(); return; }
+  const pg = e.target.closest('[data-pig]'); if (pg) openDrawer('pig', pg.dataset.pig);
+});
+$('#scrim').onclick = () => closeDrawers();
+addEventListener('keydown', e => { if (e.key === 'Escape'){ closeDrawers(); if (!$('#menu').hidden) $('#menuClose').click(); } });
+
+/* ---------- toast ---------- */
+let toastT; function toast(m){ const t = $('#toast'); t.textContent = m; t.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(()=>t.classList.remove('show'), 2600); }
+
+/* ==================================================================
+   3. INTERACTIONS VIVANTES
+   ================================================================== */
+
+/* ---------- hero: wordmark made of pigment grains ---------- */
+const hero = {cv:null, x:null, parts:[], w:0, h:0, dpr:1, ptr:{x:-9999,y:-9999,active:false}, visible:true, t0:0, groups:[]};
+function buildHero(){
+  const cv = hero.cv = $('#heroCv'); if (!cv) return;
+  const w = cv.parentElement.clientWidth; const dpr = hero.dpr = Math.min(devicePixelRatio||1, 2);
+  const word = SITE.hero.word, fam = SITE.theme.fontUi;
+  const off = document.createElement('canvas').getContext('2d');
+  let fs = 200; const setF = s => { off.font = `900 expanded ${s}px "${fam}"`; if (!off.font.includes('expanded')) off.font = `900 ${s}px "${fam}"`; try { off.fontStretch = 'expanded'; } catch(e){} };
+  setF(fs); fs = fs * (w*.985) / off.measureText(word).width; setF(fs);
+  const m = off.measureText(word); const asc = m.actualBoundingBoxAscent || fs*.72, desc = m.actualBoundingBoxDescent || 0;
+  const h = Math.ceil(asc + desc + fs*.08);
+  hero.w = w; hero.h = h; cv.style.height = h + 'px'; cv.width = w*dpr; cv.height = h*dpr;
+  const oc = off.canvas; oc.width = w; oc.height = h; setF(fs); off.fillStyle = '#000'; off.textBaseline = 'alphabetic';
+  const tw = off.measureText(word).width; off.fillText(word, (w - tw)/2, asc + fs*.04);
+  const img = off.getImageData(0,0,w,h).data;
+  const step = w < 520 ? 2 : w < 900 ? 4 : 5; const cols = SITE.hero.particleColors; const r = rng(7);
+  hero.parts = []; hero.groups = cols.map(()=>[]);
+  for (let y=0; y<h; y+=step) for (let x=0; x<w; x+=step){
+    if (img[(y*w + x)*4 + 3] > 128){
+      const t = (Math.sin(x*.011 + y*.023) + Math.sin(x*.0041 - y*.017 + 2) + 2) / 4;
+      const ci = clamp(Math.floor(t*cols.length + (r()-.5)*.9), 0, cols.length-1);
+      const p = {hx:x, hy:y, x: reduce ? x : w*r(), y: reduce ? y : h + 40 + r()*h*.6, vx:0, vy:0, s: step*(.72 + r()*.4), c:ci, d: reduce ? 0 : (x/w)*500 + r()*300};
+      hero.parts.push(p); hero.groups[ci].push(p);
+    }
+  }
+  hero.x = cv.getContext('2d'); hero.x.setTransform(dpr,0,0,dpr,0,0); hero.t0 = performance.now();
+}
+function stepHero(t){
+  if (!hero.x) return; const x = hero.x, {w,h,ptr} = hero; const el = t - hero.t0; const R = Math.max(60, w*.07), R2 = R*R;
+  x.clearRect(0,0,w,h);
+  for (let g=0; g<hero.groups.length; g++){
+    x.fillStyle = SITE.hero.particleColors[g];
+    for (const p of hero.groups[g]){
+      if (el > p.d){
+        p.vx += (p.hx - p.x) * .045; p.vy += (p.hy - p.y) * .045;
+        if (ptr.active){ const dx = p.x - ptr.x, dy = p.y - ptr.y, d2 = dx*dx + dy*dy; if (d2 < R2){ const f = (1 - d2/R2) * 7; const d = Math.sqrt(d2) || 1; p.vx += dx/d*f; p.vy += dy/d*f; } }
+        p.vx *= .82; p.vy *= .82; p.x += p.vx; p.y += p.vy;
+      }
+      x.fillRect(p.x, p.y, p.s, p.s);
+    }
+  }
+}
+function heroPointer(e){ const r = hero.cv.getBoundingClientRect(); hero.ptr.x = e.clientX - r.left; hero.ptr.y = e.clientY - r.top; hero.ptr.active = true; }
+function heroBurst(e){ heroPointer(e); const {x:px, y:py} = hero.ptr; for (const p of hero.parts){ const dx = p.x-px, dy = p.y-py, d = Math.hypot(dx,dy)||1; if (d < hero.w*.25){ const f = (1 - d/(hero.w*.25))*38; p.vx += dx/d*f; p.vy += dy/d*f - 4; } } }
+
+/* ---------- quarry strata ---------- */
+let grainPat = null;
+function drawStrata(){
+  const cv = $('#strataCv'); if (!cv || cv.closest('.view').hidden) return;
+  const r = cv.getBoundingClientRect(); if (r.bottom < 0 || r.top > innerHeight) return;
+  const dpr = Math.min(devicePixelRatio||1, 2), W = r.width, H = r.height;
+  if (cv.width !== Math.round(W*dpr) || cv.height !== Math.round(H*dpr)){ cv.width = Math.round(W*dpr); cv.height = Math.round(H*dpr); }
+  const x = cv.getContext('2d'); x.setTransform(dpr,0,0,dpr,0,0);
+  const prog = clamp((innerHeight - r.top) / (innerHeight + H), 0, 1);
+  const sky = x.createLinearGradient(0,0,0,H*.3); sky.addColorStop(0,'#C9D6E2'); sky.addColorStop(1, SITE.theme.paper); x.fillStyle = sky; x.fillRect(0,0,W,H);
+  const L = SITE.quarry.layers, n = L.length;
+  const nz = (X,i) => Math.sin(X*.0042 + i*1.7)*.55 + Math.sin(X*.0113 + i*3.1)*.3 + Math.sin(X*.031 + i*.7)*.15;
+  const topOf = (X,i) => H*(.16 + i*(.84/n)) + (prog-.5)*H*.18*(i/n) + nz(X,i)*H*.045 - (i===0 ? Math.max(0, Math.sin(X*.0022+1))*H*.06 : 0);
+  for (let i=0;i<n;i++){
+    x.beginPath(); x.moveTo(0,H); for (let X=0; X<=W+8; X+=8) x.lineTo(X, topOf(X,i)); x.lineTo(W,H); x.closePath();
+    const g = x.createLinearGradient(0, topOf(0,i), 0, H); g.addColorStop(0, shade(L[i].hex,.1)); g.addColorStop(.25, L[i].hex); g.addColorStop(1, shade(L[i].hex,-.2)); x.fillStyle = g; x.fill();
+  }
+  // erosion flutes typical of ochre cliffs
+  const rr = rng(99); x.lineCap = 'round';
+  for (let k=0;k<W/9;k++){ const X = rr()*W, i = Math.floor(rr()*n), y0 = topOf(X,i) + 4, len = 30 + rr()*H*.25; x.strokeStyle = `rgba(40,20,10,${.05 + rr()*.09})`; x.lineWidth = 1 + rr()*3; x.beginPath(); x.moveTo(X,y0); x.quadraticCurveTo(X + (rr()-.5)*8, y0+len/2, X + (rr()-.5)*6, y0+len); x.stroke();
+    x.strokeStyle = `rgba(255,240,220,${.05 + rr()*.07})`; x.lineWidth = 1; x.beginPath(); x.moveTo(X+2,y0); x.lineTo(X+3,y0+len*.7); x.stroke(); }
+  // pines on the crest
+  for (let k=0;k<W/26;k++){ const X = rr()*W, y = topOf(X,0) + 2, s = 6 + rr()*16; if (rr() < .45) continue; x.fillStyle = rr() < .5 ? '#3E4A32' : '#2F3A27';
+    x.beginPath(); x.ellipse(X, y - s*.9, s*1.1, s*.65, 0, 0, Math.PI*2); x.fill(); x.fillRect(X-1, y - s*.4, 2, s*.5); }
+  if (!grainPat){ const gc = document.createElement('canvas'); gc.width = gc.height = 160; const gx = gc.getContext('2d'), gi = gx.createImageData(160,160), gr = rng(5); for (let i=0;i<gi.data.length;i+=4){ const v = gr()*255; gi.data[i]=gi.data[i+1]=gi.data[i+2]=v; gi.data[i+3]=38; } gx.putImageData(gi,0,0); grainPat = x.createPattern(gc,'repeat'); }
+  x.globalCompositeOperation = 'overlay'; x.fillStyle = grainPat; x.fillRect(0,0,W,H); x.globalCompositeOperation = 'source-over';
+}
+
+/* ---------- manifesto words ---------- */
+function updateManif(){ const el = $('#manifText'); if (!el || el.closest('.view').hidden) return; const mid = innerHeight*.66; $$('span', el).forEach(s => s.classList.toggle('on', s.getBoundingClientRect().top < mid)); }
+
+/* ---------- process stack ---------- */
+function updateStack(){ const cards = $$('#stack .card'); if (!cards.length || cards[0].closest('.view').hidden || reduce) return;
+  cards.forEach((c,i) => { const nx = cards[i+1]; if (!nx){ c.style.transform = ''; return; } const k = clamp(1 - (nx.getBoundingClientRect().top - c.getBoundingClientRect().top) / c.offsetHeight, 0, 1); c.style.transform = `scale(${1 - k*.06})`; c.style.filter = `brightness(${1 - k*.18})`; }); }
+
+/* ---------- mixer ---------- */
+let mixSel = SITE.mixer.defaults.map(d=>({...d}));
+const pot = {parts:[], t0:0, hex:'#888888', visible:false};
+function syncMixer(){
+  $$('#palette .chip').forEach(c => c.setAttribute('aria-pressed', !!mixSel.find(m=>m.id===c.dataset.mix)));
+  const sl = $('#sliders');
+  sl.innerHTML = mixSel.length ? mixSel.map(m=>{ const p = P(m.id); return `<div class="slider"><label for="mw-${m.id}"><i class="dot" style="background:${p.hex}"></i><span>${esc(p.name)}</span></label><input type="range" id="mw-${m.id}" min="1" max="100" value="${m.w}" data-w="${m.id}"><span class="pct tnum" id="pct-${m.id}"></span><button type="button" data-unmix="${m.id}" aria-label="Retirer ${esc(p.name)}">×</button></div>`; }).join('')
+    : `<div class="slider-empty">Choisissez au moins un pigment ci-dessus pour commencer le mélange.</div>`;
+  $$('[data-w]', sl).forEach(i => i.oninput = () => { mixSel.find(m=>m.id===i.dataset.w).w = +i.value; updateMix(false); });
+  $$('[data-unmix]', sl).forEach(b => b.onclick = () => { mixSel = mixSel.filter(m=>m.id!==b.dataset.unmix); syncMixer(); });
+  updateMix(true);
+}
+function updateMix(restir){
+  const tot = mixSel.reduce((s,m)=>s+m.w,0);
+  mixSel.forEach(m => { const el = $('#pct-'+m.id); if (el) el.textContent = Math.round(m.w/tot*100) + ' %'; });
+  pot.hex = mixSel.length ? mixColors(mixSel.map(m=>({hex:P(m.id).hex, w:m.w}))) : SITE.theme.paper2;
+  $('#mixName').textContent = mixSel.length ? nameColor(pot.hex) : 'Pot vide';
+  $('#mixRecipe').textContent = mixSel.map(m=>`${Math.round(m.w/tot*100)} % ${P(m.id).name}`).join(' · ');
+  $('#mixHex').textContent = mixSel.length ? pot.hex : '';
+  ['repaint','mixCopy','mixBuy'].forEach(id => $('#'+id).disabled = !mixSel.length);
+  if (restir){ const r = rng(Date.now()%1e6); pot.parts = []; mixSel.forEach(m => { const n = Math.round(m.w/tot*420); for (let i=0;i<n;i++) pot.parts.push({a:r()*Math.PI*2, rad:.15 + r()*.8, sp:(.004 + r()*.012)*(r()<.5?1:-1), c:P(m.id).hex, s:2+r()*4}); }); pot.t0 = performance.now(); }
+  else pot.t0 = Math.min(pot.t0, performance.now() - 900);
+}
+function drawPot(t){
+  const cv = $('#potCv'); if (!cv) return; const dpr = Math.min(devicePixelRatio||1,2), S = cv.clientWidth; if (!S) return;
+  if (cv.width !== Math.round(S*dpr)){ cv.width = cv.height = Math.round(S*dpr); }
+  const x = cv.getContext('2d'); x.setTransform(dpr,0,0,dpr,0,0); x.clearRect(0,0,S,S);
+  const c = S/2, R = S*.44, k = clamp((t - pot.t0)/2600, 0, 1), e = 1 - Math.pow(1-k, 3);
+  // pot rim + shadow
+  x.fillStyle = 'rgba(30,25,20,.12)'; x.beginPath(); x.ellipse(c, c + R*.08, R*1.06, R*1.06, 0, 0, Math.PI*2); x.fill();
+  x.fillStyle = SITE.theme.paper; x.beginPath(); x.arc(c, c, R*1.05, 0, Math.PI*2); x.fill();
+  x.save(); x.beginPath(); x.arc(c, c, R, 0, Math.PI*2); x.clip();
+  x.fillStyle = pot.hex; x.globalAlpha = .25 + e*.75; x.fillRect(0,0,S,S); x.globalAlpha = 1;
+  for (const p of pot.parts){ p.a += p.sp*(1 + (1-e)*3); const rad = p.rad*R*(1 - e*.1); const px = c + Math.cos(p.a)*rad, py = c + Math.sin(p.a)*rad*.96;
+    x.globalAlpha = (1-e)*.95 + .04; x.fillStyle = p.c; x.beginPath(); x.ellipse(px, py, p.s*(1+(1-e)*1.4), p.s*.7, p.a, 0, Math.PI*2); x.fill(); }
+  x.globalAlpha = 1;
+  // surface light
+  const lg = x.createRadialGradient(c - R*.35, c - R*.4, 0, c - R*.35, c - R*.4, R*1.2); lg.addColorStop(0,'rgba(255,255,255,.28)'); lg.addColorStop(.5,'rgba(255,255,255,0)'); lg.addColorStop(1,'rgba(0,0,0,.18)'); x.fillStyle = lg; x.fillRect(0,0,S,S);
+  // spoon swirl line
+  x.strokeStyle = 'rgba(255,255,255,.18)'; x.lineWidth = 2; x.beginPath(); for (let a=0; a<Math.PI*4; a+=.1){ const rr = R*.08 + a*R*.06; const px = c + Math.cos(a + t*.0006)*rr, py = c + Math.sin(a + t*.0006)*rr; a===0 ? x.moveTo(px,py) : x.lineTo(px,py); } x.stroke();
+  x.restore();
+  x.strokeStyle = SITE.theme.line; x.lineWidth = 2; x.beginPath(); x.arc(c, c, R*1.05, 0, Math.PI*2); x.stroke();
+}
+function bindMixer(){
+  $('#palette').addEventListener('click', e => { const b = e.target.closest('[data-mix]'); if (!b) return; const id = b.dataset.mix; const i = mixSel.findIndex(m=>m.id===id);
+    if (i >= 0) mixSel.splice(i,1); else { if (mixSel.length >= 3){ toast('Trois pigments au maximum. Le premier choisi a été retiré.'); mixSel.shift(); } mixSel.push({id, w:35}); } syncMixer(); });
+  $('#repaint').onclick = () => { wipeTo(null, nameColor(pot.hex), () => setAccent(pot.hex)); };
+  $('#resetAccent').onclick = () => { setAccent(SITE.theme.accent); toast('Couleur d\'origine rétablie'); };
+  $('#mixCopy').onclick = () => { (navigator.clipboard ? navigator.clipboard.writeText(pot.hex) : Promise.reject()).then(()=>toast(`${pot.hex} copié`)).catch(()=>toast(`Code couleur : ${pot.hex}`)); };
+  $('#mixBuy').onclick = () => { mixSel.forEach(m => addToCart(m.id, 1, true)); toast(`${mixSel.length} pigment${mixSel.length>1?'s':''} ajouté${mixSel.length>1?'s':''} au panier`); };
+  syncMixer();
+}
+
+/* ---------- counters ---------- */
+const counted = new WeakSet();
+const countIO = new IntersectionObserver(es => es.forEach(e => { if (!e.isIntersecting || counted.has(e.target) || reduce) return; counted.add(e.target);
+  const el = e.target, to = +el.dataset.count, suf = el.dataset.suffix, t0 = performance.now();
+  const f = t => { const k = clamp((t-t0)/1400,0,1), v = Math.round(to*(1-Math.pow(1-k,3))); el.textContent = v + suf; if (k<1) requestAnimationFrame(f); }; requestAnimationFrame(f); }), {threshold:.6});
+
+/* ==================================================================
+   4. ROUTAGE  (#accueil, #pigments, #atelier, #journal, #contact, #lire-xxx)
+   ================================================================== */
+const VIEWS = SITE.nav.map(n=>n.id);
+function route(){
+  const h = decodeURIComponent(location.hash.slice(1));
+  if (!h) return {view:VIEWS[0]};
+  if (VIEWS.includes(h)) return {view:h};
+  if (h.startsWith('lire-')) return {view:'article', id:h.slice(5)};
+  const el = document.getElementById(h); if (el && el.closest('.view')) return {view: el.closest('.view').dataset.view, anchor:h};
+  return {view:VIEWS[0]};
+}
+let current = null;
+function show(r){
+  if (r.view === 'article') renderArticle(r.id);
+  $$('.view').forEach(v => v.hidden = v.dataset.view !== r.view);
+  current = r.view;
+  const navId = r.view === 'article' ? 'journal' : r.view;
+  $$('[data-nav]').forEach(a => a.dataset.nav === navId ? a.setAttribute('aria-current','page') : a.removeAttribute('aria-current'));
+  $('#readbar').hidden = r.view !== 'article';
+  const t = r.anchor ? document.getElementById(r.anchor) : null;
+  if (t) t.scrollIntoView({block:'start'}); else scrollTo(0,0);
+  if (r.view === VIEWS[0] && !hero.parts.length) buildHero();
+  const label = r.view === 'article' ? (SITE.journal.find(a=>a.id===r.id)||{}).title : (SITE.nav.find(n=>n.id===r.view)||{}).label;
+  document.title = r.view === VIEWS[0] ? `${B.name} Ateliers de Couleur` : `${label} · ${B.name}`;
+  onScroll();
+}
+function wipeTo(r, label, mid){
+  const w = $('#wipe'); if (reduce){ mid && mid(); r && show(r); return; }
+  $('#wipeLabel').textContent = label || ''; w.classList.remove('out'); w.classList.add('in');
+  setTimeout(() => { mid && mid(); r && show(r); w.classList.add('out'); setTimeout(() => w.classList.remove('in','out'), 520); }, 520);
+}
+addEventListener('hashchange', () => { const r = route(); if (r.view === current && r.anchor){ document.getElementById(r.anchor).scrollIntoView({behavior: reduce?'auto':'smooth', block:'start'}); return; }
+  const label = r.view === 'article' ? 'Journal' : (SITE.nav.find(n=>n.id===r.view)||{}).label; wipeTo(r, label); });
+
+/* ---------- scroll + loop ---------- */
+function onScroll(){
+  $('#hd').classList.toggle('scrolled', scrollY > 10);
+  updateManif(); updateStack(); drawStrata();
+  if (current === 'article'){ const a = $('[data-view="article"] article'); if (a){ const k = clamp((scrollY - a.offsetTop + innerHeight*.3)/(a.offsetHeight - innerHeight*.7), 0, 1); $('#readbar').style.transform = `scaleX(${k})`; } }
+}
+addEventListener('scroll', onScroll, {passive:true});
+function loop(t){
+  if (current === VIEWS[0]){
+    if (hero.visible) stepHero(t);
+    if (pot.visible) drawPot(t);
+  }
+  requestAnimationFrame(loop);
+}
+let rz; addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(() => { const w = hero.cv && hero.cv.parentElement.clientWidth; if (w && Math.abs(w - hero.w) > 2) buildHero(); grainPat = null; onScroll(); }, 160); });
+
+/* ---------- boot ---------- */
+function boot(){
+  applyTheme(); renderHeader(); renderHome(); renderPigments(); renderAtelier(); renderJournal(); renderContact(); renderFooter();
+  updateCartBadge(); bindMixer();
+  $$('[data-count]').forEach(el => countIO.observe(el));
+  const hc = $('#heroCv');
+  new IntersectionObserver(e => hero.visible = e[0].isIntersecting).observe(hc);
+  new IntersectionObserver(e => pot.visible = e[0].isIntersecting).observe($('#potCv'));
+  hc.addEventListener('pointermove', heroPointer); hc.addEventListener('pointerleave', () => hero.ptr.active = false);
+  hc.addEventListener('pointerdown', heroBurst); hc.addEventListener('pointerup', () => { if (!fine) hero.ptr.active = false; });
+  current = null; show(route());
+  if (reduce){ stepHero(0); drawPot(1e9); setInterval(()=>{ if (hero.ptr.active) stepHero(performance.now()); }, 50); }
+  requestAnimationFrame(loop);
+  setInterval(() => { const s = $('#status'), st = openState(); if (s){ s.className = 'status' + (st.open ? '' : ' closed'); s.lastChild.textContent = st.text; } }, 60e3);
+}
+const fontsReady = document.fonts ? Promise.race([document.fonts.load(`900 100px "${SITE.theme.fontUi}"`), new Promise(r=>setTimeout(r,2500))]) : Promise.resolve();
+fontsReady.then(boot, boot);
+})();
+</script>
